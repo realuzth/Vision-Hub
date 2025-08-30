@@ -2,43 +2,6 @@
 -- Enhanced character tracking system for Haikyuu-style games
 -- Created by uzth
 
--- KEY VALIDATION SYSTEM
-local function validateAccess()
-    -- This script should only be loaded through the official loader
-    -- Direct execution without key validation is not permitted
-    if not _G.UnluckysVisionKeyValidated or not _G.UnluckysVisionKey then
-        print("❌ Access Denied - This script requires valid key authentication")
-        print("Please use the official Unluckys Vision Loader")
-        return false
-    end
-    
-    -- Additional validation: verify key is still valid by checking remote source
-    local KEY_REPO_URL = "https://raw.githubusercontent.com/realuzth/Vision-Keys/main/keys.json"
-    local success, result = pcall(function()
-        return game:HttpGet(KEY_REPO_URL)
-    end)
-    
-    if success then
-        local keyData = game:GetService("HttpService"):JSONDecode(result)
-        local validKeys = keyData.keys or {}
-        
-        for _, validKey in ipairs(validKeys) do
-            if _G.UnluckysVisionKey == validKey then
-                return true
-            end
-        end
-    end
-    
-    print("❌ Access Denied - Key validation failed")
-    print("Please use the official Unluckys Vision Loader with a valid key")
-    return false
-end
-
--- Validate access before proceeding
-if not validateAccess() then
-    return
-end
-
 local SCRIPT_NAME = "Unluckys Vision"
 local SCRIPT_VERSION = "made by uzth"
 
