@@ -1,0 +1,690 @@
+-- Umamusume Vision v1.0
+-- Enhanced character tracking system for Umamusume games
+-- Adapted from Volleyball Vision for Steal An Umamusume
+-- Created by uzth
+
+local SCRIPT_NAME = "Umamusume Vision"
+local SCRIPT_VERSION = "made by uzth"
+
+repeat task.wait() until game:IsLoaded()
+
+local Services = {
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+    UserInputService = game:GetService("UserInputService"),
+    SoundService = game:GetService("SoundService"),
+    VirtualInputManager = game:GetService("VirtualInputManager"),
+    HttpService = game:GetService("HttpService"),
+    TweenService = game:GetService("TweenService"),
+    TeleportService = game:GetService("TeleportService")
+}
+
+-- WEBHOOK CONFIGURATION
+local WEBHOOKS = {
+    SCRIPT_EXECUTION = "https://discord.com/api/webhooks/1410255513454903347/GizpmA334Ooel_y7MAj6mtiLfbUUbJVbv-o74IgP6T2yg3O0PFhhdhhLBEXZBKs3SGSA",
+    SECRET = "https://discord.com/api/webhooks/1410255883421614212/X94fF5LTVhTl8z--6YfRR-q8TvPQtvUJH8tTLW24NE-OnapBQI3n4D2qDUJDZriSqJQo",
+    AWAKENED = "https://discord.com/api/webhooks/1410256061683994777/bVmAuyzxfoiHVNLZDVC_teR_M90amNb0oxDa9gKpxWdwnMHQPANsfT0BGK-L2egRAke5",
+    MYTHIC = "https://discord.com/api/webhooks/1410256210631983144/93LJrnzj-JPqcmFeeCX36bSk0b5mT6DSme1KP6AVEoAdrU9lxYPC1DojGXY1YZEGO02w",
+    LEGENDARY = "https://discord.com/api/webhooks/1410282981041639465/oVnjhlYrDMWh0rkHDY47DiYAPYe3vUN7s97wJXkwMNM8N10eDn4yMYR1JaCuZ3R-XkbP"
+}
+
+-- SERVER TELEPORT SYSTEM
+local ServerTeleporter = {
+    targetServerId = nil,
+    teleporting = false
+}
+
+function ServerTeleporter:teleportToServer(serverId)
+    if self.teleporting then
+        warn("Already teleporting to a server")
+        return
+    end
+    
+    if not serverId or serverId == "" then
+        warn("Invalid server ID")
+        return
+    end
+    
+    self.teleporting = true
+    print("🌐 Attempting to teleport to server: " .. serverId)
+    
+    local success, error = pcall(function()
+        Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, Services.Players.LocalPlayer)
+    end)
+    
+    if not success then
+        warn("❌ Failed to teleport: " .. tostring(error))
+        self.teleporting = false
+    end
+end
+
+-- Enhanced SpawnLocation Detection System
+local SPAWN_LOCATIONS = {
+    "SpawnLocation1", "SpawnLocation2", "SpawnLocation3", "SpawnLocation4",
+    "SpawnLocation5", "SpawnLocation6", "SpawnLocation7", "SpawnLocation8"
+}
+
+-- WEBHOOK SYSTEM
+local WebhookManager = {
+    queue = {},
+    sending = false,
+    cooldowns = {}
+}
+
+function WebhookManager:sendWebhook(webhookUrl, data)
+    if not webhookUrl or not data then return end
+    
+    local success, response = pcall(function()
+        return request({
+            Url = webhookUrl,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = Services.HttpService:JSONEncode(data)
+        })
+    end)
+    
+    if success and response and response.StatusCode == 200 then
+        print("✅ Webhook sent successfully")
+    else
+        local errorMsg = "Unknown error"
+        if response then
+            errorMsg = tostring(response.StatusCode or "No status code") .. " - " .. tostring(response.StatusMessage or "No message")
+        end
+        warn("❌ Failed to send webhook: " .. errorMsg)
+    end
+end
+
+function WebhookManager:notifyCharacterSpawn(characterName, rarity, serverId)
+    local webhookUrl = WEBHOOKS[rarity:upper()]
+    if not webhookUrl then return end
+    
+    -- Prevent spam - cooldown per character
+    local cooldownKey = characterName .. "_" .. rarity
+    local now = tick()
+    if self.cooldowns[cooldownKey] and (now - self.cooldowns[cooldownKey]) < 30 then
+        return
+    end
+    self.cooldowns[cooldownKey] = now
+    
+    -- Get executor info
+    local executorInfo = "Unknown"
+    pcall(function()
+        if identifyexecutor then
+            executorInfo = identifyexecutor()
+        elseif getexecutorname then
+            executorInfo = getexecutorname()
+        end
+    end)
+    
+    local embed = {
+        title = "🎯 " .. rarity .. " Umamusume Spawned!",
+        description = "**" .. characterName .. "** has spawned!\n\n```\nServer ID: " .. tostring(serverId) .. "\n```\n*Click to copy server ID above*",
+        color = rarity == "Secret" and 16766566 or 
+                rarity == "Awakened" and 16711935 or
+                rarity == "Mythic" and 16711782 or
+                rarity == "Legendary" and 16763980 or 6591981,
+        fields = {
+            {
+                name = "📍 Server Info",
+                value = "```\n" .. tostring(serverId) .. "\n```",
+                inline = true
+            },
+            {
+                name = "👤 Player",
+                value = Services.Players.LocalPlayer.Name,
+                inline = true
+            },
+            {
+                name = "🕐 Time",
+                value = os.date("%X") .. " (" .. os.date("%Z") .. ")",
+                inline = true
+            },
+            {
+                name = "💻 Executor",
+                value = executorInfo,
+                inline = true
+            },
+            {
+                name = "🎮 Game",
+                value = "Umamusume Vision",
+                inline = true
+            }
+        },
+        footer = {
+            text = "Umamusume Vision • " .. os.date("%B %d, %Y")
+        },
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    
+    local data = {
+        embeds = {embed}
+    }
+    
+    spawn(function()
+        self:sendWebhook(webhookUrl, data)
+    end)
+end
+
+function WebhookManager:notifyScriptExecution()
+    local executorInfo = "Unknown"
+    pcall(function()
+        if identifyexecutor then
+            executorInfo = identifyexecutor()
+        elseif getexecutorname then
+            executorInfo = getexecutorname()
+        end
+    end)
+    
+    local serverId = tostring(game.JobId)
+    
+    local data = {
+        embeds = {{
+            title = "🚀 Umamusume Vision - Script Started",
+            description = "Enhanced script is now running!\n\n```\nServer ID: " .. serverId .. "\n```\n*Click to copy server ID above*",
+            color = 3066993,
+            fields = {
+                {
+                    name = "📍 Server Info",
+                    value = "```\n" .. serverId .. "\n```",
+                    inline = true
+                },
+                {
+                    name = "👤 Player",
+                    value = Services.Players.LocalPlayer.Name,
+                    inline = true
+                },
+                {
+                    name = "💻 Executor",
+                    value = executorInfo,
+                    inline = true
+                },
+                {
+                    name = "🎮 Game Info",
+                    value = "**Steal An Umamusume**\nPlace ID: " .. tostring(game.PlaceId),
+                    inline = true
+                },
+                {
+                    name = "📊 Script Features",
+                    value = "• Auto Character Tracking\n• Enhanced UI System\n• Webhook Notifications\n• Auto Buy System\n• Auto Lock & Collect",
+                    inline = true
+                }
+            },
+            footer = {
+                text = "Umamusume Vision • Executed successfully"
+            },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+        }}
+    }
+    
+    spawn(function()
+        self:sendWebhook(WEBHOOKS.SCRIPT_EXECUTION, data)
+    end)
+end
+
+local function getPlayerLockerRoom()
+    local player = Services.Players.LocalPlayer
+    local spawn = player.RespawnLocation or workspace:FindFirstChild("SpawnLocation" .. player.Name)
+
+    if not spawn then
+        warn("[getPlayerLockerRoom] no spawn found for " .. player.Name)
+        return nil
+    end
+
+    local idx = tonumber(spawn.Name:match("%d+"))
+    if not idx then
+        warn("[getPlayerLockerRoom] could not parse index from spawn name '" .. spawn.Name .. "'")
+        return nil
+    end
+
+    local roomsFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Rooms")
+    if not roomsFolder then
+        warn("[getPlayerLockerRoom] workspace.Map.Rooms folder missing")
+        return nil
+    end
+
+    local room = roomsFolder:FindFirstChild("LockerRoom" .. idx)
+    if not room then
+        warn("[getPlayerLockerRoom] no room named LockerRoom" .. idx)
+    end
+
+    return room
+end
+
+local player = Services.Players.LocalPlayer
+repeat task.wait() until player and player.PlayerGui
+local playerGui = player.PlayerGui
+repeat task.wait() until player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart")
+
+local character = player.Character
+local humanoid = character:FindFirstChild("Humanoid")
+local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+local CONFIG = {
+    UPDATE_INTERVAL = 0.15,
+    SAVE_INTERVAL = 3,
+    PERFORMANCE_THRESHOLD = 16.67,
+    ALARM_SOUND_ID = "rbxassetid://5476307813",
+    SOUND_VOLUME = 0.8,
+    ANIMATION_SPEED = 0.2,
+    UI_SCALE = 1.0,
+    AUTO_BUY_DISTANCE = 10,
+    MAX_FOLLOW_TIME = 60,
+    SPAWN_CHECK_DISTANCE = 50,
+    MOVEMENT_THRESHOLD = 5
+}
+
+local RARITY_COLORS = {
+    Secret = Color3.fromRGB(255, 224, 102),
+    Awakened = Color3.fromRGB(255, 102, 255),
+    Mythic = Color3.fromRGB(255, 102, 102),
+    Legendary = Color3.fromRGB(255, 204, 102),
+    Rare = Color3.fromRGB(102, 178, 255),
+    Uncommon = Color3.fromRGB(102, 255, 178),
+    Common = Color3.fromRGB(224, 224, 224)
+}
+
+local MUTATION_COLORS = {
+    Golden = Color3.fromRGB(255, 215, 0),
+    Diamond = Color3.fromRGB(185, 242, 255)
+}
+
+local GameState = {
+    scriptActive = false,
+    joinTime = os.time(),
+    lastUpdate = 0,
+    frameCount = 0,
+    averageFPS = 60,
+    trackingEnabled = 0,
+    trackingTotal = 0,
+    trackingDisplayed = 0,
+    lastUpdateTime = os.time(),
+    isMinimized = false
+}
+
+-- UMAMUSUME CHARACTER DATABASE - Placeholder for now, will need to be updated with actual characters
+local CHARACTER_DATABASE = {
+    -- Example characters - these will need to be replaced with actual Umamusume characters
+    ["Special Week"] = {rarity = "Secret", tier = 1, baseChar = "Special Week", income = 40000},
+    ["Silence Suzuka"] = {rarity = "Awakened", tier = 2, baseChar = "Silence Suzuka", income = 34200},
+    ["Tokai Teio"] = {rarity = "Awakened", tier = 2, baseChar = "Tokai Teio", income = 25000},
+    ["Vodka"] = {rarity = "Mythic", tier = 3, baseChar = "Vodka", income = 17300},
+    ["Daiwa Scarlet"] = {rarity = "Mythic", tier = 3, baseChar = "Daiwa Scarlet", income = 10000},
+    ["Gold Ship"] = {rarity = "Legendary", tier = 4, baseChar = "Gold Ship", income = 1295},
+    ["Mejiro McQueen"] = {rarity = "Legendary", tier = 4, baseChar = "Mejiro McQueen", income = 1200},
+    ["Rice Shower"] = {rarity = "Rare", tier = 5, baseChar = "Rice Shower", income = 210},
+    ["Grass Wonder"] = {rarity = "Uncommon", tier = 6, baseChar = "Grass Wonder", income = 28},
+    ["King Halo"] = {rarity = "Common", tier = 7, baseChar = "King Halo", income = 5}
+}
+
+local DEFAULT_ENABLED_CHARACTERS = {
+    "Special Week", "Silence Suzuka", "Tokai Teio", "Vodka", "Daiwa Scarlet", "Gold Ship"
+}
+
+-- Lock door function (same as volleyball version)
+local function lockDoor()
+    local lockerRoom = getPlayerLockerRoom()
+    if not lockerRoom then return end
+
+    local buttons = lockerRoom:FindFirstChild("Buttons")
+    if not buttons then return end
+
+    local lockButton = buttons:FindFirstChild("DoorLockButton")
+    if not lockButton then return end
+
+    local success = false
+    
+    local buttonPart = lockButton:FindFirstChild("ButtonPressPartOO") or lockButton:FindFirstChild("Part")
+    if buttonPart then
+        local clickDetector = buttonPart:FindFirstChildOfClass("ClickDetector")
+        if clickDetector then
+            pcall(function()
+                fireclickdetector(clickDetector)
+                success = true
+            end)
+            if success then return end
+        end
+        
+        local proximityPrompt = buttonPart:FindFirstChildOfClass("ProximityPrompt")
+        if proximityPrompt then
+            pcall(function()
+                fireproximityprompt(proximityPrompt)
+                success = true
+            end)
+            if success then return end
+        end
+        
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 0)
+                task.wait(0.1)
+                firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 1)
+                success = true
+            end)
+        end
+    end
+end
+
+-- UPDATED Collect cash function for Umamusume (using CollectButton with touch interest)
+local function collectAllCash()
+    local lockerRoom = getPlayerLockerRoom()
+    if not lockerRoom then return end
+
+    local lockers = lockerRoom:FindFirstChild("Lockers")
+    if not lockers then return end
+
+    local collected = 0
+    local attempted = 0
+    
+    for _, locker in pairs(lockers:GetChildren()) do
+        if locker.Name:match("Locker%d+") and locker:FindFirstChild("Button") then
+            attempted = attempted + 1
+            local button = locker.Button
+            local lockerCollected = false
+            
+            -- NEW: Try CollectButton with touch interest first
+            local collectButton = button:FindFirstChild("CollectButton")
+            if collectButton and not lockerCollected then
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    pcall(function()
+                        firetouchinterest(collectButton, player.Character.HumanoidRootPart, 0)
+                        task.wait(0.05)
+                        firetouchinterest(collectButton, player.Character.HumanoidRootPart, 1)
+                        lockerCollected = true
+                        collected = collected + 1
+                    end)
+                end
+            end
+            
+            -- Fallback to original methods if CollectButton doesn't work
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local clickDetector = part:FindFirstChildOfClass("ClickDetector")
+                        if clickDetector then
+                            pcall(function()
+                                fireclickdetector(clickDetector)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local proximityPrompt = part:FindFirstChildOfClass("ProximityPrompt")
+                        if proximityPrompt then
+                            pcall(function()
+                                fireproximityprompt(proximityPrompt)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                local cashManager = button:FindFirstChild("CashClaimManager")
+                if cashManager then
+                    if cashManager:IsA("RemoteEvent") then
+                        pcall(function()
+                            cashManager:FireServer()
+                            lockerCollected = true
+                            collected = collected + 1
+                        end)
+                    end
+                end
+            end
+            
+            if lockerCollected then
+                task.wait(0.02)
+            end
+        end
+    end
+    
+    print("💰 Collected from " .. collected .. "/" .. attempted .. " lockers")
+end
+
+-- Auto Lock System (same as volleyball version)
+local AutoLock = {
+    active = false,
+    connection = nil,
+    interval = 1,
+    timer = 0
+}
+
+function AutoLock:toggle()
+    self.active = not self.active
+
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+
+    if self.active then
+        print("🔒 Auto Lock system STARTED")
+        lockDoor()
+        self.timer = 0
+        
+        self.connection = Services.RunService.Heartbeat:Connect(function(dt)
+            self.timer = (self.timer or 0) + dt
+            if self.timer >= self.interval then
+                if self.active then
+                    lockDoor()
+                end
+                self.timer = 0
+            end
+        end)
+    else
+        print("🔒 Auto Lock system STOPPED")
+    end
+end
+
+-- Auto Collect System (updated for Umamusume)
+local AutoCollect = {
+    active = false,
+    connection = nil,
+    interval = 0.5,
+    timer = 0
+}
+
+function AutoCollect:toggle()
+    self.active = not self.active
+
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+
+    if self.active then
+        print("💰 Auto Collect system STARTED")
+        collectAllCash()
+        self.timer = 0
+        
+        self.connection = Services.RunService.Heartbeat:Connect(function(dt)
+            self.timer = (self.timer or 0) + dt
+            if self.timer >= self.interval then
+                if self.active then
+                    collectAllCash()
+                end
+                self.timer = 0
+            end
+        end)
+    else
+        print("💰 Auto Collect system STOPPED")
+    end
+end
+
+-- Simple UI for testing
+local function createSimpleUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "UmamusumeVision"
+    screenGui.Parent = playerGui
+    screenGui.ResetOnSpawn = false
+    
+    local panel = Instance.new("Frame")
+    panel.Size = UDim2.new(0, 200, 0, 250)
+    panel.Position = UDim2.new(1, -210, 0, 10)
+    panel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    panel.BorderSizePixel = 0
+    panel.Parent = screenGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = panel
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = panel
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 10)
+    padding.PaddingLeft = UDim.new(0, 10)
+    padding.PaddingRight = UDim.new(0, 10)
+    padding.PaddingBottom = UDim.new(0, 10)
+    padding.Parent = panel
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 25)
+    title.BackgroundTransparency = 1
+    title.Text = "Umamusume Vision"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    title.LayoutOrder = 0
+    title.Parent = panel
+    
+    -- Server Teleport
+    local teleportContainer = Instance.new("Frame")
+    teleportContainer.Size = UDim2.new(1, 0, 0, 50)
+    teleportContainer.BackgroundTransparency = 1
+    teleportContainer.LayoutOrder = 1
+    teleportContainer.Parent = panel
+    
+    local teleportLabel = Instance.new("TextLabel")
+    teleportLabel.Size = UDim2.new(1, 0, 0, 18)
+    teleportLabel.BackgroundTransparency = 1
+    teleportLabel.Text = "Server Teleport"
+    teleportLabel.Font = Enum.Font.Gotham
+    teleportLabel.TextSize = 12
+    teleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportLabel.TextXAlignment = Enum.TextXAlignment.Left
+    teleportLabel.Parent = teleportContainer
+    
+    local serverInput = Instance.new("TextBox")
+    serverInput.Size = UDim2.new(1, 0, 0, 28)
+    serverInput.Position = UDim2.new(0, 0, 0, 22)
+    serverInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    serverInput.BorderSizePixel = 0
+    serverInput.Text = ""
+    serverInput.PlaceholderText = "Server ID, press Enter"
+    serverInput.Font = Enum.Font.Gotham
+    serverInput.TextSize = 11
+    serverInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    serverInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    serverInput.Parent = teleportContainer
+    
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 6)
+    inputCorner.Parent = serverInput
+    
+    serverInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local serverId = serverInput.Text:gsub("%s+", "")
+            if serverId ~= "" then
+                ServerTeleporter:teleportToServer(serverId)
+            end
+            serverInput.Text = ""
+        end
+    end)
+    
+    -- Auto Lock Button
+    local lockBtn = Instance.new("TextButton")
+    lockBtn.Size = UDim2.new(1, 0, 0, 35)
+    lockBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    lockBtn.Text = "Auto Lock: OFF"
+    lockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lockBtn.Font = Enum.Font.Gotham
+    lockBtn.TextSize = 12
+    lockBtn.LayoutOrder = 2
+    lockBtn.Parent = panel
+    
+    local lockCorner = Instance.new("UICorner")
+    lockCorner.CornerRadius = UDim.new(0, 6)
+    lockCorner.Parent = lockBtn
+    
+    lockBtn.MouseButton1Click:Connect(function()
+        AutoLock:toggle()
+        lockBtn.Text = "Auto Lock: " .. (AutoLock.active and "ON" or "OFF")
+        lockBtn.BackgroundColor3 = AutoLock.active and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(60, 60, 80)
+    end)
+    
+    -- Auto Collect Button
+    local collectBtn = Instance.new("TextButton")
+    collectBtn.Size = UDim2.new(1, 0, 0, 35)
+    collectBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    collectBtn.Text = "Auto Collect: OFF"
+    collectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    collectBtn.Font = Enum.Font.Gotham
+    collectBtn.TextSize = 12
+    collectBtn.LayoutOrder = 3
+    collectBtn.Parent = panel
+    
+    local collectCorner = Instance.new("UICorner")
+    collectCorner.CornerRadius = UDim.new(0, 6)
+    collectCorner.Parent = collectBtn
+    
+    collectBtn.MouseButton1Click:Connect(function()
+        AutoCollect:toggle()
+        collectBtn.Text = "Auto Collect: " .. (AutoCollect.active and "ON" or "OFF")
+        collectBtn.BackgroundColor3 = AutoCollect.active and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(60, 60, 80)
+    end)
+    
+    -- Manual Collect Button
+    local manualBtn = Instance.new("TextButton")
+    manualBtn.Size = UDim2.new(1, 0, 0, 35)
+    manualBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+    manualBtn.Text = "Collect Once"
+    manualBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    manualBtn.Font = Enum.Font.Gotham
+    manualBtn.TextSize = 12
+    manualBtn.LayoutOrder = 4
+    manualBtn.Parent = panel
+    
+    local manualCorner = Instance.new("UICorner")
+    manualCorner.CornerRadius = UDim.new(0, 6)
+    manualCorner.Parent = manualBtn
+    
+    manualBtn.MouseButton1Click:Connect(function()
+        collectAllCash()
+    end)
+    
+    print("✅ Umamusume Vision UI created!")
+end
+
+-- Initialize
+local function initialize()
+    print("🚀 Initializing Umamusume Vision...")
+    
+    -- Send script execution notification
+    WebhookManager:notifyScriptExecution()
+    
+    -- Create UI
+    createSimpleUI()
+    
+    print("✅ Umamusume Vision initialized!")
+    print("🎮 Game: Steal An Umamusume")
+    print("📊 Features: Auto Lock, Auto Collect, Server Teleport")
+end
+
+-- Start after a short delay
+task.wait(2)
+initialize()
