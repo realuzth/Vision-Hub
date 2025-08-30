@@ -1,8 +1,8 @@
--- Unluckys Vision v1.0
--- Enhanced character tracking system for Umamusume games
+-- Unluckys Hub v1.0
+-- Enhanced character tracking system for Umamusume-style games
 -- Created by uzth
 
-local SCRIPT_NAME = "Unluckys Vision"
+local SCRIPT_NAME = "Unluckys Hub"
 local SCRIPT_VERSION = "made by uzth"
 
 repeat task.wait() until game:IsLoaded()
@@ -18,7 +18,7 @@ local Services = {
     TeleportService = game:GetService("TeleportService")
 }
 
--- WEBHOOK CONFIGURATION - UMA Musume webhooks
+-- WEBHOOK CONFIGURATION - All webhooks as requested
 local WEBHOOKS = {
     SCRIPT_EXECUTION = "https://discord.com/api/webhooks/1411240265741631539/NT24tsgSbCwpwZgoxW8Mog8oXcM20z1VwFaNRoGFluzCAiRLQZ-Ny3vW1ZHF-zCIB4hm",
     SECRET = "https://discord.com/api/webhooks/1411240406456336464/h9MXIBKhKPN3CdiWcdZ1DLk0SnaohHgPbaUh2eLrr6Hm6qfncvD-7n5dM0pK_iwIuspl",
@@ -26,36 +26,7 @@ local WEBHOOKS = {
     ["TOP STAR"] = "https://discord.com/api/webhooks/1411243099643969536/jgM795hNSBhHsSli6xis8d-Kc5rM0tVGz3cmQn7Pb6SE4ixEDYQJHjHs3lSZtemXkf-L",
     STAR = "https://discord.com/api/webhooks/1411243200986873866/V6ZJGuPu4aJEAXwnIfTnsiSS2Njh4YBCRZmkr9drQpZz6gkwDgdmoMBSr90C3zBO8YoX"
 }
-
--- SERVER TELEPORT SYSTEM (Above auto buy in settings as requested)
-local ServerTeleporter = {
-    targetServerId = nil,
-    teleporting = false
-}
-
-function ServerTeleporter:teleportToServer(serverId)
-    if self.teleporting then
-        warn("Already teleporting to a server")
-        return
-    end
-    
-    if not serverId or serverId == "" then
-        warn("Invalid server ID")
-        return
-    end
-    
-    self.teleporting = true
-    print("🌐 Attempting to teleport to server: " .. serverId)
-    
-    local success, error = pcall(function()
-        Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, Services.Players.LocalPlayer)
-    end)
-    
-    if not success then
-        warn("❌ Failed to teleport: " .. tostring(error))
-        self.teleporting = false
-    end
-end
+print("hello")
 -- Enhanced SpawnLocation Detection System
 local SPAWN_LOCATIONS = {
     "SpawnLocation1", "SpawnLocation2", "SpawnLocation3", "SpawnLocation4",
@@ -127,9 +98,13 @@ function WebhookManager:notifyCharacterSpawn(characterName, rarity, serverId)
         title = "🎯 " .. rarity .. " Character Spawned!",
         description = "**" .. characterName .. "** has spawned!\n\n```\nServer ID: " .. tostring(serverId) .. "\n```\n*Click to copy server ID above*",
         color = rarity == "Secret" and 16766566 or 
-                rarity == "Awakened" and 16711935 or
-                rarity == "Mythic" and 16711782 or
-                rarity == "Legendary" and 16763980 or 6591981,
+                rarity == "Legend" and 16711935 or
+                rarity == "Top Star" and 16711782 or
+                rarity == "Star" and 16763980 or
+                rarity == "Platinum" and 6591981 or
+                rarity == "Gold" and 16766720 or
+                rarity == "Silver" and 12632256 or
+                rarity == "Bronze" and 13467442 or 6591981,
         fields = {
             {
                 name = "📍 Server Info",
@@ -158,12 +133,12 @@ function WebhookManager:notifyCharacterSpawn(characterName, rarity, serverId)
             },
             {
                 name = "🎮 Game",
-                value = "Unluckys Vision",
+                value = "Unluckys Hub",
                 inline = true
             }
         },
         footer = {
-            text = "Unluckys Vision Enhanced • " .. os.date("%B %d, %Y")
+            text = "Unluckys Hub Enhanced • " .. os.date("%B %d, %Y")
         },
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -208,7 +183,7 @@ function WebhookManager:notifyScriptExecution()
     
     local data = {
         embeds = {{
-            title = "🚀 Unluckys Vision Enhanced - Script Started",
+            title = "🚀 Unluckys Hub Enhanced - Script Started",
             description = "Enhanced script is now running!\n\n```\nServer ID: " .. serverId .. "\n```\n*Click to copy server ID above*",
             color = 3066993,
             fields = {
@@ -239,7 +214,7 @@ function WebhookManager:notifyScriptExecution()
                 },
                 {
                     name = "🎮 Game Info",
-                    value = "**Unluckys Vision**\nPlace ID: " .. tostring(game.PlaceId),
+                    value = "**Unluckys Hub**\nPlace ID: " .. tostring(game.PlaceId),
                     inline = true
                 },
                 {
@@ -249,7 +224,7 @@ function WebhookManager:notifyScriptExecution()
                 }
             },
             footer = {
-                text = "Unluckys Vision Enhanced • Executed successfully"
+                text = "Unluckys Hub Enhanced • Executed successfully"
             },
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         }}
@@ -346,13 +321,15 @@ local RARITY_COLORS = {
     Secret = Color3.fromRGB(255, 224, 102),
     Legend = Color3.fromRGB(255, 102, 255),
     ["Top Star"] = Color3.fromRGB(255, 102, 102),
-    Platinum = Color3.fromRGB(255, 204, 102),
-    Gold = Color3.fromRGB(102, 178, 255),
-    Silver = Color3.fromRGB(102, 255, 178),
-    Bronze = Color3.fromRGB(224, 224, 224),
-    Beginner = Color3.fromRGB(150, 150, 150)
+    Star = Color3.fromRGB(255, 204, 102),
+    Platinum = Color3.fromRGB(102, 178, 255),
+    Gold = Color3.fromRGB(255, 215, 0),
+    Silver = Color3.fromRGB(192, 192, 192),
+    Bronze = Color3.fromRGB(205, 127, 50),
+    Beginner = Color3.fromRGB(224, 224, 224)
 }
 
+-- Mutations removed for Umamusume
 
 local GameState = {
     scriptActive = false,
@@ -368,172 +345,135 @@ local GameState = {
 }
 
 local CHARACTER_DATABASE = {
-    -- Secret Rarity
-    ["Symboli Rudlof"] = {rarity = "Secret", tier = 1, baseChar = "Symboli Rudlof", income = 50000},
-    ["Gentildonna"] = {rarity = "Secret", tier = 1, baseChar = "Gentildonna", income = 48000},
-    ["Orfevere"] = {rarity = "Secret", tier = 1, baseChar = "Orfevere", income = 46000},
-    ["World Over Heaven Haru"] = {rarity = "Secret", tier = 1, baseChar = "World Over Heaven Haru", temporary = true},
-    ["An Actual Horse"] = {rarity = "Secret", tier = 1, baseChar = "An Actual Horse", temporary = true},
+    -- Secret
+    ["Symboli Rudolf"] = {rarity = "Secret", tier = 1, baseChar = "Symboli Rudolf"},
+    ["Gentildonna"] = {rarity = "Secret", tier = 1, baseChar = "Gentildonna"},
+    ["Orfevre"] = {rarity = "Secret", tier = 1, baseChar = "Orfevre"},
+    ["Over World Heaven Haru"] = {rarity = "Secret", tier = 1, baseChar = "Over World Heaven Haru"},
+    ["An Actual Horse"] = {rarity = "Secret", tier = 1, baseChar = "An Actual Horse"},
     
-    -- Legend Rarity
-    ["Shining Star Haru Urara"] = {rarity = "Legend", tier = 2, baseChar = "Shining Star Haru Urara", income = 40000},
-    ["Blazing Promise Tokai Teio"] = {rarity = "Legend", tier = 2, baseChar = "Blazing Promise Tokai Teio", income = 38000},
-    ["Empress Kitasan Black"] = {rarity = "Legend", tier = 2, baseChar = "Empress Kitasan Black", income = 36000},
-    ["Starlit Grace Mejiro McQueen"] = {rarity = "Legend", tier = 2, baseChar = "Starlit Grace Mejiro McQueen", income = 34000},
-    ["Sky Ace Mayano Top Gun"] = {rarity = "Legend", tier = 2, baseChar = "Sky Ace Mayano Top Gun", income = 32000},
-    ["Dark Veil Rice Shower"] = {rarity = "Legend", tier = 2, baseChar = "Dark Veil Rice Shower", income = 30000},
-    ["Overdrive Tamamo Cross"] = {rarity = "Legend", tier = 2, baseChar = "Overdrive Tamamo Cross", income = 28000},
-    ["Gray Monster Oguri Cap"] = {rarity = "Legend", tier = 2, baseChar = "Gray Monster Oguri Cap", income = 26000},
-    ["Summer Golshi"] = {rarity = "Legend", tier = 2, baseChar = "Summer Golshi", income = 24000},
-    ["Cheval Grand"] = {rarity = "Legend", tier = 2, baseChar = "Cheval Grand", income = 22000},
-    ["Honored Agnes"] = {rarity = "Legend", tier = 2, baseChar = "Honored Agnes", temporary = true},
-    ["Bakushin West"] = {rarity = "Legend", tier = 2, baseChar = "Bakushin West", temporary = true},
+    -- Legend
+    ["Shining Star Haru Urara"] = {rarity = "Legend", tier = 2, baseChar = "Shining Star Haru Urara"},
+    ["Blazing Promise Tokai Teio"] = {rarity = "Legend", tier = 2, baseChar = "Blazing Promise Tokai Teio"},
+    ["Empress Kitasan Black"] = {rarity = "Legend", tier = 2, baseChar = "Empress Kitasan Black"},
+    ["Starlit Grace Mejiro McQueen"] = {rarity = "Legend", tier = 2, baseChar = "Starlit Grace Mejiro McQueen"},
+    ["Sky Ace Mayano Top Gun"] = {rarity = "Legend", tier = 2, baseChar = "Sky Ace Mayano Top Gun"},
+    ["Dark Veil Rice Shower"] = {rarity = "Legend", tier = 2, baseChar = "Dark Veil Rice Shower"},
+    ["Overdrive Tamamo Cross"] = {rarity = "Legend", tier = 2, baseChar = "Overdrive Tamamo Cross"},
+    ["Gray Monster Oguri Cap"] = {rarity = "Legend", tier = 2, baseChar = "Gray Monster Oguri Cap"},
+    ["Summer Golshi"] = {rarity = "Legend", tier = 2, baseChar = "Summer Golshi"},
+    ["Cheval Grand"] = {rarity = "Legend", tier = 2, baseChar = "Cheval Grand"},
+    ["Honored Agnes"] = {rarity = "Legend", tier = 2, baseChar = "Honored Agnes"},
+    ["Bakushin West"] = {rarity = "Legend", tier = 2, baseChar = "Bakushin West"},
     
-    -- Top Star Rarity
-    ["TM Opera O"] = {rarity = "Top Star", tier = 3, baseChar = "TM Opera O", income = 20000},
-    ["El Condor Pasa"] = {rarity = "Top Star", tier = 3, baseChar = "El Condor Pasa", income = 18000},
-    ["Kitasan Black"] = {rarity = "Top Star", tier = 3, baseChar = "Kitasan Black", income = 16000},
-    ["Taiki Shuttle"] = {rarity = "Top Star", tier = 3, baseChar = "Taiki Shuttle", income = 14000},
-    ["Mihono"] = {rarity = "Top Star", tier = 3, baseChar = "Mihono", income = 12000},
-    ["Manhattan Cafe"] = {rarity = "Top Star", tier = 3, baseChar = "Manhattan Cafe", income = 10000},
-    ["Satono Diamond"] = {rarity = "Top Star", tier = 3, baseChar = "Satono Diamond", income = 8000},
-    ["Seiun Sky"] = {rarity = "Top Star", tier = 3, baseChar = "Seiun Sky", income = 6000},
-    ["Beiun Hayahide"] = {rarity = "Top Star", tier = 3, baseChar = "Beiun Hayahide", income = 4000},
-    ["Colonel Ship"] = {rarity = "Top Star", tier = 3, baseChar = "Colonel Ship", temporary = true},
-    ["Hachimi Teio"] = {rarity = "Top Star", tier = 3, baseChar = "Hachimi Teio", temporary = true},
-    ["Squid Game Rice Shower"] = {rarity = "Top Star", tier = 3, baseChar = "Squid Game Rice Shower", temporary = true},
-    ["Super Freak"] = {rarity = "Top Star", tier = 3, baseChar = "Super Freak", temporary = true},
-    ["Mean Nature"] = {rarity = "Top Star", tier = 3, baseChar = "Mean Nature", temporary = true},
+    -- Top Star
+    ["TM Opera O"] = {rarity = "Top Star", tier = 3, baseChar = "TM Opera O"},
+    ["El Condor Pasa"] = {rarity = "Top Star", tier = 3, baseChar = "El Condor Pasa"},
+    ["Kitasan Black"] = {rarity = "Top Star", tier = 3, baseChar = "Kitasan Black"},
+    ["Taiki Shuttle"] = {rarity = "Top Star", tier = 3, baseChar = "Taiki Shuttle"},
+    ["Mihono"] = {rarity = "Top Star", tier = 3, baseChar = "Mihono"},
+    ["Manhattan Cafe"] = {rarity = "Top Star", tier = 3, baseChar = "Manhattan Cafe"},
+    ["Satono Diamond"] = {rarity = "Top Star", tier = 3, baseChar = "Satono Diamond"},
+    ["Seiun Sky"] = {rarity = "Top Star", tier = 3, baseChar = "Seiun Sky"},
+    ["Biwa Hayahide"] = {rarity = "Top Star", tier = 3, baseChar = "Biwa Hayahide"},
+    ["Squid Game Rice Shower"] = {rarity = "Top Star", tier = 3, baseChar = "Squid Game Rice Shower"},
+    ["Super Freak"] = {rarity = "Top Star", tier = 3, baseChar = "Super Freak"},
+    ["Mean Nature"] = {rarity = "Top Star", tier = 3, baseChar = "Mean Nature"},
     
-    -- Platinum Rarity
-    ["Gold Ship"] = {rarity = "Platinum", tier = 4, baseChar = "Gold Ship", income = 8000},
-    ["Tokai Teio"] = {rarity = "Platinum", tier = 4, baseChar = "Tokai Teio", income = 7500},
-    ["Daiwa Scarlet"] = {rarity = "Platinum", tier = 4, baseChar = "Daiwa Scarlet", income = 7000},
-    ["Jungle Pocket"] = {rarity = "Platinum", tier = 4, baseChar = "Jungle Pocket", income = 6500},
-    ["Rice Shower"] = {rarity = "Platinum", tier = 4, baseChar = "Rice Shower", income = 6000},
-    ["Oguri Cap"] = {rarity = "Platinum", tier = 4, baseChar = "Oguri Cap", income = 5500},
-    ["Nice Nature"] = {rarity = "Platinum", tier = 4, baseChar = "Nice Nature", income = 5000},
-    ["Twin Turbo"] = {rarity = "Platinum", tier = 4, baseChar = "Twin Turbo", income = 4500},
-    ["Meisho Doto"] = {rarity = "Platinum", tier = 4, baseChar = "Meisho Doto", income = 4000},
-    ["Maruzensky"] = {rarity = "Platinum", tier = 4, baseChar = "Maruzensky", income = 3500},
-    ["Silence Suzuka"] = {rarity = "Platinum", tier = 4, baseChar = "Silence Suzuka", income = 3000},
-    ["Super Creek"] = {rarity = "Platinum", tier = 4, baseChar = "Super Creek", income = 2500},
-    ["Mejiro McQueen"] = {rarity = "Platinum", tier = 4, baseChar = "Mejiro McQueen", income = 2000},
-    ["Special Week"] = {rarity = "Platinum", tier = 4, baseChar = "Special Week", income = 1500},
-    ["Hishi Amazon"] = {rarity = "Platinum", tier = 4, baseChar = "Hishi Amazon", income = 1000},
-    ["Uolka"] = {rarity = "Platinum", tier = 4, baseChar = "Uolka", income = 800},
-    ["Grass Wonder"] = {rarity = "Platinum", tier = 4, baseChar = "Grass Wonder", income = 600},
-    ["Doom Slayer Suzuka"] = {rarity = "Platinum", tier = 4, baseChar = "Doom Slayer Suzuka", temporary = true},
-    ["Kitasan Wick"] = {rarity = "Platinum", tier = 4, baseChar = "Kitasan Wick", temporary = true},
-    ["Chubby Oguri"] = {rarity = "Platinum", tier = 4, baseChar = "Chubby Oguri", temporary = true},
+    -- Star
+    ["Maruzensky"] = {rarity = "Star", tier = 4, baseChar = "Maruzensky"},
+    ["Silence Suzuka"] = {rarity = "Star", tier = 4, baseChar = "Silence Suzuka"},
+    ["Super Creek"] = {rarity = "Star", tier = 4, baseChar = "Super Creek"},
+    ["Mejiro McQueen"] = {rarity = "Star", tier = 4, baseChar = "Mejiro McQueen"},
+    ["Special Week"] = {rarity = "Star", tier = 4, baseChar = "Special Week"},
+    ["Hishi Amazon"] = {rarity = "Star", tier = 4, baseChar = "Hishi Amazon"},
+    ["Uolka"] = {rarity = "Star", tier = 4, baseChar = "Uolka"},
+    ["Grass Wonder"] = {rarity = "Star", tier = 4, baseChar = "Grass Wonder"},
+    ["Colonel Ship"] = {rarity = "Star", tier = 4, baseChar = "Colonel Ship"},
+    ["Hachimi Teoi"] = {rarity = "Star", tier = 4, baseChar = "Hachimi Teoi"},
     
-    -- Gold Rarity
-    ["Mambo"] = {rarity = "Gold", tier = 5, baseChar = "Mambo", income = 2000},
-    ["Haru Urara"] = {rarity = "Gold", tier = 5, baseChar = "Haru Urara", income = 1800},
-    ["Myano Top Gun"] = {rarity = "Gold", tier = 5, baseChar = "Myano Top Gun", income = 1600},
-    ["Agnes Taychon"] = {rarity = "Gold", tier = 5, baseChar = "Agnes Taychon", income = 1400},
-    ["Sakura Bakushin O"] = {rarity = "Gold", tier = 5, baseChar = "Sakura Bakushin O", income = 1200},
-    ["Tamamo Cross"] = {rarity = "Gold", tier = 5, baseChar = "Tamamo Cross", income = 1000},
-    ["Normal Week"] = {rarity = "Gold", tier = 5, baseChar = "Normal Week", temporary = true},
-    ["MaruStappen"] = {rarity = "Gold", tier = 5, baseChar = "MaruStappen", temporary = true},
+    -- Platinum
+    ["Gold Ship"] = {rarity = "Platinum", tier = 5, baseChar = "Gold Ship"},
+    ["Tokai Teio"] = {rarity = "Platinum", tier = 5, baseChar = "Tokai Teio"},
+    ["Daiwa Scarlet"] = {rarity = "Platinum", tier = 5, baseChar = "Daiwa Scarlet"},
+    ["Jungle Pocket"] = {rarity = "Platinum", tier = 5, baseChar = "Jungle Pocket"},
+    ["Rice Shower"] = {rarity = "Platinum", tier = 5, baseChar = "Rice Shower"},
+    ["Oguri Cap"] = {rarity = "Platinum", tier = 5, baseChar = "Oguri Cap"},
+    ["Nice Nature"] = {rarity = "Platinum", tier = 5, baseChar = "Nice Nature"},
+    ["Twin Turbo"] = {rarity = "Platinum", tier = 5, baseChar = "Twin Turbo"},
+    ["Meisho Doto"] = {rarity = "Platinum", tier = 5, baseChar = "Meisho Doto"},
+    ["Doom Slayer Suzuka"] = {rarity = "Platinum", tier = 5, baseChar = "Doom Slayer Suzuka"},
+    ["Kitasan Wick"] = {rarity = "Platinum", tier = 5, baseChar = "Kitasan Wick"},
+    ["Chubby Oguri"] = {rarity = "Platinum", tier = 5, baseChar = "Chubby Oguri"},
     
-    -- Silver Rarity
-    ["Academy Daiwa Scarlet"] = {rarity = "Silver", tier = 6, baseChar = "Academy Daiwa Scarlet", income = 800},
-    ["Academy Gold Ship"] = {rarity = "Silver", tier = 6, baseChar = "Academy Gold Ship", income = 750},
-    ["Academy Taiki Shuttle"] = {rarity = "Silver", tier = 6, baseChar = "Academy Taiki Shuttle", income = 700},
-    ["Academy Agnes Tachyon"] = {rarity = "Silver", tier = 6, baseChar = "Academy Agnes Tachyon", income = 650},
-    ["Academy TM Opera O"] = {rarity = "Silver", tier = 6, baseChar = "Academy TM Opera O", income = 600},
-    ["Academy Mejiro McQueen"] = {rarity = "Silver", tier = 6, baseChar = "Academy Mejiro McQueen", income = 550},
-    ["Carrot Haru"] = {rarity = "Silver", tier = 6, baseChar = "Carrot Haru", temporary = true},
-    ["Amazon Delivery"] = {rarity = "Silver", tier = 6, baseChar = "Amazon Delivery", temporary = true},
-    ["Starbucks Cafe"] = {rarity = "Silver", tier = 6, baseChar = "Starbucks Cafe", temporary = true},
+    -- Gold
+    ["Mambo"] = {rarity = "Gold", tier = 6, baseChar = "Mambo"},
+    ["Haru Urara"] = {rarity = "Gold", tier = 6, baseChar = "Haru Urara"},
+    ["Myano Top Gun"] = {rarity = "Gold", tier = 6, baseChar = "Myano Top Gun"},
+    ["Agens Tachyon"] = {rarity = "Gold", tier = 6, baseChar = "Agens Tachyon"},
+    ["Sakura Bakushin O"] = {rarity = "Gold", tier = 6, baseChar = "Sakura Bakushin O"},
+    ["Tamamo Cross"] = {rarity = "Gold", tier = 6, baseChar = "Tamamo Cross"},
+    ["Normal Week"] = {rarity = "Gold", tier = 6, baseChar = "Normal Week"},
+    ["MaruStappen"] = {rarity = "Gold", tier = 6, baseChar = "MaruStappen"},
     
-    -- Bronze Rarity
-    ["Academy Tamamo Cross"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Tamamo Cross", income = 400},
-    ["Academy El Condor Pasa"] = {rarity = "Bronze", tier = 7, baseChar = "Academy El Condor Pasa", income = 350},
-    ["Academy Onguri Cap"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Onguri Cap", income = 300},
-    ["Academy Myano Top Gun"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Myano Top Gun", income = 250},
+    -- Silver
+    ["Academy Daiwa Scarlet"] = {rarity = "Silver", tier = 7, baseChar = "Academy Daiwa Scarlet"},
+    ["Academy Gold Ship"] = {rarity = "Silver", tier = 7, baseChar = "Academy Gold Ship"},
+    ["Academy Taiki Shuttle"] = {rarity = "Silver", tier = 7, baseChar = "Academy Taiki Shuttle"},
+    ["Academy Agnes Tachyon"] = {rarity = "Silver", tier = 7, baseChar = "Academy Agnes Tachyon"},
+    ["Academy TM Opera O"] = {rarity = "Silver", tier = 7, baseChar = "Academy TM Opera O"},
+    ["Academy Mejiro McQueen"] = {rarity = "Silver", tier = 7, baseChar = "Academy Mejiro McQueen"},
+    ["Carrot Haru"] = {rarity = "Silver", tier = 7, baseChar = "Carrot Haru"},
+    ["Amazon Delievery"] = {rarity = "Silver", tier = 7, baseChar = "Amazon Delievery"},
+    ["Starbucks Cafe"] = {rarity = "Silver", tier = 7, baseChar = "Starbucks Cafe"},
     
-    -- Beginner Rarity
-    ["Academy Haru Urara"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Haru Urara", income = 200},
-    ["Academy Mambo"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Mambo", income = 150},
-    ["Academy Sakura Bokushin O"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Sakura Bokushin O", income = 100},
+    -- Bronze
+    ["Academy Tamamo Cross"] = {rarity = "Bronze", tier = 8, baseChar = "Academy Tamamo Cross"},
+    ["Academy El Condor Pasa"] = {rarity = "Bronze", tier = 8, baseChar = "Academy El Condor Pasa"},
+    ["Academy Oguri Cap"] = {rarity = "Bronze", tier = 8, baseChar = "Academy Oguri Cap"},
+    ["Academy Mayano Top Gun"] = {rarity = "Bronze", tier = 8, baseChar = "Academy Mayano Top Gun"},
     
+    -- Beginner
+    ["Academy Haru Urara"] = {rarity = "Beginner", tier = 9, baseChar = "Academy Haru Urara"},
+    ["Academy Mambo"] = {rarity = "Beginner", tier = 9, baseChar = "Academy Mambo"},
+    ["Academy Sakura Bakushin O"] = {rarity = "Beginner", tier = 9, baseChar = "Academy Sakura Bakushin O"}
 }
 
--- Only enable high-tier characters by default
 local DEFAULT_ENABLED_CHARACTERS = {
-    -- Secret Tier
-    "Symboli Rudlof", "Gentildonna", "Orfevere",
-    -- Legend Tier
-    "Shining Star Haru Urara", "Blazing Promise Tokai Teio", "Empress Kitasan Black", "Starlit Grace Mejiro McQueen",
-    "Sky Ace Mayano Top Gun", "Dark Veil Rice Shower", "Overdrive Tamamo Cross", "Gray Monster Oguri Cap",
-    "Summer Golshi", "Cheval Grand",
-    -- Top Star Tier
-    "TM Opera O", "El Condor Pasa", "Kitasan Black", "Taiki Shuttle", "Mihono", "Manhattan Cafe",
-    "Satono Diamond", "Seiun Sky", "Beiun Hayahide"
+    "Symboli Rudolf", "Gentildonna", "Orfevre", "Over World Heaven Haru", "An Actual Horse",
+    "Shining Star Haru Urara", "Blazing Promise Tokai Teio", "Empress Kitasan Black",
+    "Starlit Grace Mejiro McQueen", "Sky Ace Mayano Top Gun", "Dark Veil Rice Shower",
+    "TM Opera O", "El Condor Pasa", "Kitasan Black", "Taiki Shuttle", "Mihono",
+    "Maruzensky", "Silence Suzuka", "Super Creek", "Mejiro McQueen", "Special Week"
 }
 
--- Use CHARACTER_DATABASE directly without mutations
+-- No mutations in Umamusume, use direct database
 local COMPLETE_DATABASE = CHARACTER_DATABASE
 
 local function getSortedCharacters()
-    local orderedCharacters = {
-        -- Secret Tier
-        "Symboli Rudlof", "Gentildonna", "Orfevere",
-        -- Legend Tier
-        "Shining Star Haru Urara", "Blazing Promise Tokai Teio", "Empress Kitasan Black", "Starlit Grace Mejiro McQueen",
-        "Sky Ace Mayano Top Gun", "Dark Veil Rice Shower", "Overdrive Tamamo Cross", "Gray Monster Oguri Cap",
-        "Summer Golshi", "Cheval Grand",
-        -- Top Star Tier
-        "TM Opera O", "El Condor Pasa", "Kitasan Black", "Taiki Shuttle", "Mihono", "Manhattan Cafe",
-        "Satono Diamond", "Seiun Sky", "Beiun Hayahide",
-        -- Platinum Tier
-        "Gold Ship", "Tokai Teio", "Daiwa Scarlet", "Jungle Pocket", "Rice Shower", "Oguri Cap",
-        "Nice Nature", "Twin Turbo", "Meisho Doto", "Maruzensky", "Silence Suzuka", "Super Creek",
-        "Mejiro McQueen", "Special Week", "Hishi Amazon", "Uolka", "Grass Wonder",
-        -- Gold Tier
-        "Mambo", "Haru Urara", "Myano Top Gun", "Agnes Taychon", "Sakura Bakushin O", "Tamamo Cross",
-        -- Silver Tier
-        "Academy Daiwa Scarlet", "Academy Gold Ship", "Academy Taiki Shuttle", "Academy Agnes Tachyon",
-        "Academy TM Opera O", "Academy Mejiro McQueen",
-        -- Bronze Tier
-        "Academy Tamamo Cross", "Academy El Condor Pasa", "Academy Onguri Cap", "Academy Myano Top Gun",
-        -- Beginner Tier
-        "Academy Haru Urara", "Academy Mambo", "Academy Sakura Bokushin O",
-        -- Temporary Characters
-        "Carrot Haru", "Amazon Delivery", "Starbucks Cafe", "Normal Week", "MaruStappen",
-        "Doom Slayer Suzuka", "Kitasan Wick", "Chubby Oguri", "Colonel Ship", "Hachimi Teio",
-        "Squid Game Rice Shower", "Super Freak", "Mean Nature", "Honored Agnes", "Bakushin West",
-        "World Over Heaven Haru", "An Actual Horse"
+    local finalList = {}
+    
+    -- Sort by tier (rarity priority)
+    local tierOrder = {
+        [1] = {}, -- Secret
+        [2] = {}, -- Legend  
+        [3] = {}, -- Top Star
+        [4] = {}, -- Star
+        [5] = {}, -- Platinum
+        [6] = {}, -- Gold
+        [7] = {}, -- Silver
+        [8] = {}, -- Bronze
+        [9] = {}  -- Beginner
     }
     
     for name, data in pairs(COMPLETE_DATABASE) do
-        if not data.tier then
-            local tierMap = {Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4, Gold = 5, Silver = 6, Bronze = 7, Beginner = 8}
-            data.tier = tierMap[data.rarity] or 9
-        end
-        if not data.baseChar then
-            data.baseChar = name
-        end
+        local tier = data.tier or 9
+        table.insert(tierOrder[tier], name)
     end
     
-    local finalList = {}
-    for _, charName in ipairs(orderedCharacters) do
-        if COMPLETE_DATABASE[charName] then
-            table.insert(finalList, charName)
-        end
-    end
-    
-    for name, _ in pairs(COMPLETE_DATABASE) do
-        local found = false
-        for _, orderedName in ipairs(orderedCharacters) do
-            if orderedName == name then
-                found = true
-                break
-            end
-        end
-        if not found then
+    -- Add characters in tier order
+    for tier = 1, 9 do
+        for _, name in ipairs(tierOrder[tier]) do
             table.insert(finalList, name)
         end
     end
@@ -1369,62 +1309,120 @@ local function lockDoor()
     end
 end
 
---- Collect cash function for Umamusume game using correct paths
+-- Collect cash function for Umamusume
 local function collectAllCash()
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
+    local player = Services.Players.LocalPlayer
+    local lockerRoom = getPlayerLockerRoom()
+    if not lockerRoom then return end
+
+    local lockers = lockerRoom:FindFirstChild("Lockers")
+    if not lockers then return end
 
     local collected = 0
     local attempted = 0
     
-    -- Use the correct path: workspace.Map.Rooms.LockerRoom[PlayerNumber].Lockers.Locker[Number].CollectButton
-    local map = workspace:FindFirstChild("Map")
-    if not map then return end
-    
-    local rooms = map:FindFirstChild("Rooms")
-    if not rooms then return end
-    
-    -- Find player's locker room
-    local playerSpawn = getPlayerSpawnLocation()
-    if not playerSpawn then return end
-    
-    local playerNumber = playerSpawn.Name:match("%d+")
-    if not playerNumber then return end
-    
-    local lockerRoom = rooms:FindFirstChild("LockerRoom" .. playerNumber)
-    if not lockerRoom then return end
-    
-    local lockers = lockerRoom:FindFirstChild("Lockers")
-    if not lockers then return end
-    
-    -- Collect from all lockers in the player's room
     for _, locker in pairs(lockers:GetChildren()) do
-        if locker.Name:match("Locker%d+") then
-            local collectButton = locker:FindFirstChild("CollectButton")
-            if collectButton then
-                attempted = attempted + 1
-                local lockerCollected = false
-                
-                -- Use touch interest on CollectButton for Umamusume game
+        if locker.Name:match("Locker%d+") and locker:FindFirstChild("Button") then
+            attempted = attempted + 1
+            local button = locker.Button
+            local lockerCollected = false
+            
+            -- Try the new Umamusume paths first
+            local collectButton = button:FindFirstChild("CollectButton")
+            if collectButton and not lockerCollected then
                 pcall(function()
-                    firetouchinterest(collectButton, player.Character.HumanoidRootPart, 0)
-                    task.wait(0.05)
-                    firetouchinterest(collectButton, player.Character.HumanoidRootPart, 1)
+                    if collectButton:IsA("RemoteEvent") then
+                        collectButton:FireServer()
+                    elseif collectButton:FindFirstChildOfClass("ClickDetector") then
+                        fireclickdetector(collectButton:FindFirstChildOfClass("ClickDetector"))
+                    elseif collectButton:FindFirstChildOfClass("ProximityPrompt") then
+                        fireproximityprompt(collectButton:FindFirstChildOfClass("ProximityPrompt"))
+                    end
                     lockerCollected = true
                     collected = collected + 1
                 end)
-                
-                if lockerCollected then
-                    task.wait(0.02)
+            end
+            
+            -- Try CashClaimManager for Umamusume
+            if not lockerCollected then
+                local cashManager = button:FindFirstChild("CashClaimManager")
+                if cashManager then
+                    pcall(function()
+                        if cashManager:IsA("RemoteEvent") then
+                            cashManager:FireServer()
+                        elseif cashManager:FindFirstChildOfClass("RemoteEvent") then
+                            cashManager:FindFirstChildOfClass("RemoteEvent"):FireServer()
+                        end
+                        lockerCollected = true
+                        collected = collected + 1
+                    end)
                 end
             end
+            
+            -- Try button's children (second child as specified)
+            if not lockerCollected then
+                local children = button:GetChildren()
+                if children[2] and not lockerCollected then
+                    local secondChild = children[2]
+                    pcall(function()
+                        if secondChild:FindFirstChildOfClass("ClickDetector") then
+                            fireclickdetector(secondChild:FindFirstChildOfClass("ClickDetector"))
+                        elseif secondChild:FindFirstChildOfClass("ProximityPrompt") then
+                            fireproximityprompt(secondChild:FindFirstChildOfClass("ProximityPrompt"))
+                        elseif secondChild:IsA("RemoteEvent") then
+                            secondChild:FireServer()
+                        end
+                        lockerCollected = true
+                        collected = collected + 1
+                    end)
+                end
+            end
+            
+            -- Fallback: try all button children
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local clickDetector = part:FindFirstChildOfClass("ClickDetector")
+                        if clickDetector then
+                            pcall(function()
+                                fireclickdetector(clickDetector)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                        
+                        local proximityPrompt = part:FindFirstChildOfClass("ProximityPrompt")
+                        if proximityPrompt and not lockerCollected then
+                            pcall(function()
+                                fireproximityprompt(proximityPrompt)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            -- Final fallback: touch interaction
+            if not lockerCollected and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local buttonPart = button:FindFirstChild("Part2") or button:FindFirstChild("Part")
+                if buttonPart then
+                    pcall(function()
+                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 0)
+                        task.wait(0.05)
+                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 1)
+                        lockerCollected = true
+                        collected = collected + 1
+                    end)
+                end
+            end
+            
+            if lockerCollected then
+                task.wait(0.02)
+            end
         end
-    end
-    
-    if collected > 0 then
-        AutoCollect.totalCollected = (AutoCollect.totalCollected or 0) + collected
-        AutoCollect.collectionsThisSession = (AutoCollect.collectionsThisSession or 0) + collected
     end
 end
 
@@ -1574,15 +1572,15 @@ end
 
 function DataManager:getBasePath()
     local paths = {
-        function() return getexecutordirectory() .. "/UnluckysVision" end,
-        function() return getscriptsdirectory() .. "/../UnluckysVision" end,
-        function() return "UnluckysVision" end
+        function() return getexecutordirectory() .. "/UnluckysHub" end,
+        function() return getscriptsdirectory() .. "/../UnluckysHub" end,
+        function() return "UnluckysHub" end
     }
     for _, pathFunc in ipairs(paths) do
         local success, path = pcall(pathFunc)
         if success and path then return path end
     end
-    return "UnluckysVision"
+    return "UnluckysHub"
 end
 
 function DataManager:getAccountPath()
@@ -1595,7 +1593,7 @@ function DataManager:getAccountPath()
 end
 
 function DataManager:getDataPath()
-    return self:getAccountPath() .. "/gamedata.json"
+    return self:getAccountPath() .. "/umamusume_data.json"
 end
 
 function DataManager:createDirectories()
@@ -1708,8 +1706,7 @@ function DataManager:getDefaultData()
             status = "never",
             lastSeen = 0,
             sessionSpawns = 0,
-            totalTime = 0,
-            sessionStart = os.time()
+            totalTime = 0
         }
     end
 
@@ -1922,26 +1919,21 @@ function SoundManager:play(soundId, volume, pitch)
     end)
 end
 
-function SoundManager:playSpawnAlert(rarity, mutation)
+function SoundManager:playSpawnAlert(rarity)
     local basePitch = {
         Secret = 1.4,
-        Awakened = 1.3,
-        Mythic = 1.2,
-        Legendary = 1.1,
-        Rare = 1.0,
-        Uncommon = 0.9,
-        Common = 0.8
+        Legend = 1.3,
+        ["Top Star"] = 1.2,
+        Star = 1.1,
+        Platinum = 1.0,
+        Gold = 0.9,
+        Silver = 0.8,
+        Bronze = 0.7,
+        Beginner = 0.6
     }
     
-    local mutationBonus = 0
-    if mutation == "Golden" then
-        mutationBonus = 0.1
-    elseif mutation == "Diamond" then
-        mutationBonus = 0.2
-    end
-    
-    local pitch = (basePitch[rarity] or 1.0) + mutationBonus
-    local volume = CONFIG.SOUND_VOLUME * (mutation == "Diamond" and 1.2 or mutation == "Golden" and 1.1 or 1.0)
+    local pitch = basePitch[rarity] or 1.0
+    local volume = CONFIG.SOUND_VOLUME
     
     self:play(CONFIG.ALARM_SOUND_ID, volume, pitch)
 end
@@ -2245,7 +2237,7 @@ function UIManager:create()
     self.elements = self.elements or {}
 
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "UnluckysVision"
+    screenGui.Name = "VolleyballVision"
     screenGui.Parent = playerGui
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
@@ -2407,8 +2399,8 @@ function UIManager:createSettingsPanel()
 
     local panel = Instance.new("Frame")
     panel.Name = "SettingsPanel"
-    panel.Size = UDim2.new(0, 180, 0, 210)  -- Reduced height to remove leftover space
-    panel.Position = UDim2.new(1, -190, 0, 65)  -- Adjusted position for narrower width
+    panel.Size = UDim2.new(0, 200, 0, 180)  -- Reduced from 220x240 to 200x180
+    panel.Position = UDim2.new(1, -210, 0, 65)  -- Adjusted position
     panel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     panel.Visible = false
     panel.ZIndex = 50
@@ -2466,11 +2458,6 @@ function UIManager:createSettingsPanel()
         btn.TextSize = 12
         btn.ZIndex = 53
         btn.Parent = container
-        
-        -- Add rounded corners to switch buttons
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
 
         btn.MouseButton1Click:Connect(function()
             gameData.settings[settingKey] = not gameData.settings[settingKey]
@@ -2483,16 +2470,16 @@ function UIManager:createSettingsPanel()
         end)
     end
 
-    -- Server Teleport section (simplified single input)
+    -- Server Teleport section (above auto-buy as requested)
     local teleportContainer = Instance.new("Frame")
-    teleportContainer.Size = UDim2.new(1, 0, 0, 50)
+    teleportContainer.Size = UDim2.new(1, 0, 0, 60)
     teleportContainer.LayoutOrder = 0
     teleportContainer.BackgroundTransparency = 1
     teleportContainer.ZIndex = 51
     teleportContainer.Parent = panel
 
     local teleportLabel = Instance.new("TextLabel")
-    teleportLabel.Size = UDim2.new(1, 0, 0, 18)
+    teleportLabel.Size = UDim2.new(1, 0, 0, 20)
     teleportLabel.BackgroundTransparency = 1
     teleportLabel.Text = "Server Teleport"
     teleportLabel.Font = Enum.Font.GothamBold
@@ -2503,34 +2490,35 @@ function UIManager:createSettingsPanel()
     teleportLabel.Parent = teleportContainer
 
     local serverInput = Instance.new("TextBox")
-    serverInput.Size = UDim2.new(1, 0, 0, 28)  -- Full width and slightly taller
-    serverInput.Position = UDim2.new(0, 0, 0, 22)
+    serverInput.Size = UDim2.new(0.65, 0, 0, 25)
+    serverInput.Position = UDim2.new(0, 0, 0, 25)
     serverInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
     serverInput.BorderSizePixel = 0
     serverInput.Text = ""
-    serverInput.PlaceholderText = "Type Server ID, press Enter"
+    serverInput.PlaceholderText = "Server ID"
     serverInput.Font = Enum.Font.Gotham
     serverInput.TextSize = 12
     serverInput.TextColor3 = Color3.fromRGB(255, 255, 255)
     serverInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     serverInput.ZIndex = 52
     serverInput.Parent = teleportContainer
-    
-    -- Add rounded corners to input
-    local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 6)
-    inputCorner.Parent = serverInput
-    
-    -- Simple teleport on Enter key only
-    serverInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            local serverId = serverInput.Text:gsub("%s+", "")
-            if serverId ~= "" then
-                print("Teleporting to:", serverId)
-                ServerTeleporter:teleportToServer(serverId)
-            end
-            -- Always clear regardless of content
-            serverInput.Text = ""
+
+    local teleportBtn = Instance.new("TextButton")
+    teleportBtn.Size = UDim2.new(0.3, -5, 0, 25)
+    teleportBtn.Position = UDim2.new(0.7, 5, 0, 25)
+    teleportBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    teleportBtn.BorderSizePixel = 0
+    teleportBtn.Text = "Teleport"
+    teleportBtn.Font = Enum.Font.GothamBold
+    teleportBtn.TextSize = 11
+    teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportBtn.ZIndex = 52
+    teleportBtn.Parent = teleportContainer
+
+    teleportBtn.MouseButton1Click:Connect(function()
+        local serverId = serverInput.Text:gsub("%s+", "")
+        if serverId and serverId ~= "" then
+            ServerTeleporter:teleportToServer(serverId)
         end
     end)
 
@@ -2546,31 +2534,17 @@ function UIManager:createSettingsPanel()
         AutoCollect:toggle()
     end, 3)
 
-    -- Clear Data button with improved styling
+    -- Clear Data button
     local clearBtn = Instance.new("TextButton")
-    clearBtn.Size = UDim2.new(1, 0, 0, 35)  -- Slightly taller for better proportion
+    clearBtn.Size = UDim2.new(1, 0, 0, 30)
     clearBtn.LayoutOrder = 4
-    clearBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+    clearBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     clearBtn.TextColor3 = Color3.new(1, 1, 1)
-    clearBtn.Text = "🗑️ Clear Data"
+    clearBtn.Text = "Clear Data"
     clearBtn.Font = Enum.Font.GothamBold
-    clearBtn.TextSize = 13
+    clearBtn.TextSize = 12
     clearBtn.ZIndex = 53
     clearBtn.Parent = panel
-    
-    -- Add rounded corners to clear button
-    local clearCorner = Instance.new("UICorner")
-    clearCorner.CornerRadius = UDim.new(0, 8)
-    clearCorner.Parent = clearBtn
-    
-    -- Add hover effects to clear button
-    clearBtn.MouseEnter:Connect(function()
-        clearBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    end)
-    
-    clearBtn.MouseLeave:Connect(function()
-        clearBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-    end)
 
     clearBtn.MouseButton1Click:Connect(function()
         if DataManager and DataManager.clear then
@@ -2632,7 +2606,12 @@ function UIManager:createSearchSection(parent)
     searchCorner.CornerRadius = UDim.new(0, 8)
     searchCorner.Parent = searchBox
     
-    -- Exact match toggle removed as requested
+    local exactToggle = self:createToggleButton("Exact Match", UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 45), function(isToggled)
+        gameData.filters.exactMatch = isToggled
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end, gameData.filters.exactMatch)
+    exactToggle.Parent = searchContainer
     
     local enabledToggle = self:createToggleButton("Enabled Only", UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 45), function(isToggled)
         gameData.filters.enabledOnly = isToggled
@@ -2641,17 +2620,16 @@ function UIManager:createSearchSection(parent)
     end, gameData.filters.enabledOnly)
     enabledToggle.Parent = searchContainer
     
-    local rarityFilter = self:createFilterDropdown("Rarity", {"All", "Secret", "Legend", "Top Star", "Platinum", "Gold", "Silver", "Bronze", "Beginner"}, 
-        UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 80), function(selected)
+    local rarityFilter = self:createFilterDropdown("Rarity", {"All", "Secret", "Legend", "Top Star", "Star", "Platinum", "Gold", "Silver", "Bronze", "Beginner"}, 
+        UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, 80), function(selected)
         gameData.filters.selectedRarity = selected == "All" and nil or selected
         self:updateCharacterList()
         DataManager:save(gameData)
     end, gameData.filters.selectedRarity or "All")
     rarityFilter.Parent = searchContainer
     
-    -- Mutation filter removed as requested
-    
     self.elements.searchBox = searchBox
+    self.elements.exactToggle = exactToggle
     self.elements.enabledToggle = enabledToggle
     self.elements.rarityFilter = rarityFilter
     
@@ -2850,7 +2828,7 @@ function UIManager:populateCharacterList()
         infoLabel.TextXAlignment = Enum.TextXAlignment.Left
         infoLabel.Parent = nameContainer
         
-        -- Mutation icon removed as requested
+        -- No mutation icons for Umamusume
         
         self.elements.characterItems[charName] = {
             frame = itemFrame,
@@ -2884,7 +2862,9 @@ function UIManager:updateCharacterList()
             
             local visibleCount = 0
             local searchText = gameData.filters.searchText
+            local exactMatch = gameData.filters.exactMatch
             local rarityFilter = gameData.filters.selectedRarity
+            local mutationFilter = gameData.filters.selectedMutation
             local enabledOnly = gameData.filters.enabledOnly
             
             for _, charName in ipairs(characterNames) do
@@ -2898,14 +2878,19 @@ function UIManager:updateCharacterList()
                 if searchText ~= "" then
                     local nameToSearch = charName:lower()
                     local baseCharToSearch = charData.baseChar:lower()
-                    shouldShow = nameToSearch:find(searchText, 1, true) ~= nil or baseCharToSearch:find(searchText, 1, true) ~= nil
+                    
+                    if exactMatch then
+                        shouldShow = (nameToSearch == searchText) or (baseCharToSearch == searchText) or (nameToSearch:find(searchText, 1, true))
+                    else
+                        shouldShow = nameToSearch:find(searchText, 1, true) ~= nil or baseCharToSearch:find(searchText, 1, true) ~= nil
+                    end
                 end
                 
                 if shouldShow and rarityFilter and rarityFilter ~= "All" then
                     shouldShow = charData.rarity == rarityFilter
                 end
                 
-                -- Mutation filter removed as requested
+                -- No mutation filtering for Umamusume
                 
                 if shouldShow and enabledOnly then
                     shouldShow = trackData.enabled
@@ -3059,7 +3044,7 @@ function UIManager:updateCharacterList()
                     nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
                     nameLabel.Parent = nameContainer
                     
-                    -- Mutation icon removed as requested
+                    -- No mutation icons for Umamusume
                     
                     local statusContainer = Instance.new("Frame")
                     statusContainer.Size = UDim2.new(0.12, 0, 1, 0)
@@ -3092,13 +3077,7 @@ function UIManager:updateCharacterList()
                         label.Size = UDim2.new(col.width, -5, 1, 0)
                         label.Position = UDim2.new(col.pos, 0, 0, 0)
                         label.BackgroundTransparency = 1
-                        -- Priority based on rarity tier (1=highest, 8=lowest)
-                        local rarityPriority = {
-                            Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4,
-                            Gold = 5, Silver = 6, Bronze = 7, Beginner = 8
-                        }
-                        local priority = rarityPriority[charData.rarity] or 8
-                        label.Text = col.name == "priority" and tostring(priority) or "0"
+                        label.Text = col.name == "priority" and string.format("%d", 10-charData.tier) or "0"
                         label.TextColor3 = Color3.fromRGB(200, 200, 200)
                         label.Font = Enum.Font.Gotham
                         label.TextSize = 10
@@ -3225,7 +3204,7 @@ function UIManager:updateCharacterList()
         function UIManager:updateTrackingCount()
             local enabledCount = 0
             local totalCount = 0
-            for _, charName in ipairs(characterNames) do
+                for _, charName in ipairs(characterNames) do
                 local trackData = gameData.characters[charName]
                 if trackData.enabled then
                     enabledCount = enabledCount + 1
@@ -3318,26 +3297,19 @@ function UIManager:updateCharacterList()
                         status = "never",
                         lastSeen = 0,
                         sessionSpawns = 0,
-                        totalTime = 0,
-                        sessionStart = os.time()
+                        totalTime = 0
                     }
                     trackData = gameData.characters[charName]
-                end
-                
-                -- Reset session spawns if this is a new session
-                if not trackData.sessionStart or trackData.sessionStart < gameData.analytics.sessionStart then
-                    trackData.sessionSpawns = 0
-                    trackData.sessionStart = gameData.analytics.sessionStart
                 end
 
                 if trackData.enabled then
                     local currentCount = self:getCharacterCount(charName)
                     if currentCount > 0 then
-                        trackData.lastSeen = os.time()
                         if trackData.status ~= "active" then
                             trackData.status = "active"
                             trackData.sessionSpawns = trackData.sessionSpawns + 1
                             trackData.totalSeen = trackData.totalSeen + 1
+                            trackData.lastSeen = os.time()
                             
                             -- Send webhook notification for character spawn
                             local charData = COMPLETE_DATABASE[charName]
@@ -3351,7 +3323,7 @@ function UIManager:updateCharacterList()
                         trackData.currentCount = currentCount
                         trackData.totalTime = trackData.totalTime + deltaTime
                     else
-{{ ... }}
+                        if trackData.status ~= "inactive" then
                             trackData.status = "inactive"
                         end
                         trackData.currentCount = 0
@@ -3401,17 +3373,11 @@ function UIManager:updateCharacterList()
                 row.labels.lastSeen.Text = "Never"
             end
 
-            -- Priority based on rarity tier (1=highest, 8=lowest)
-            local rarityPriority = {
-                Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4,
-                Gold = 5, Silver = 6, Bronze = 7, Beginner = 8
-            }
-            local priority = rarityPriority[charData.rarity] or 8
-            row.labels.priority.Text = tostring(priority)
+            row.labels.priority.Text = string.format("%d", 10-charData.tier)
         end
 
         local function initialize()
-        print("[UnluckysVision] Initializing...")
+        print("[Unluckys Hub] Initializing...")
 
         -- Load saved data or fallback to defaults
         gameData = DataManager:load() or DataManager:getDefaultData()
@@ -3436,20 +3402,20 @@ function UIManager:updateCharacterList()
         UIManager:updateCharacterList()
 
         -- Initialize auto systems with saved states
-        print("[UnluckysVision] Initializing auto systems...")
+        print("[VolleyballVision] Initializing auto systems...")
         
         if gameData.settings.autoLockEnabled then
-            print("[UnluckysVision] Restoring Auto Lock system...")
+            print("[VolleyballVision] Restoring Auto Lock system...")
             AutoLock:toggle()
         end
 
         if gameData.settings.autoCollectEnabled then
-            print("[UnluckysVision] Restoring Auto Collect system...")
+            print("[VolleyballVision] Restoring Auto Collect system...")
             AutoCollect:toggle()
         end
         
         if gameData.settings.autoBuyEnabled then
-            print("[UnluckysVision] Restoring Auto Buy system...")
+            print("[VolleyballVision] Restoring Auto Buy system...")
             AutoBuySystem:toggle()
         end
 
@@ -3491,4 +3457,5 @@ function UIManager:updateCharacterList()
         end)
 
         task.wait(2)
-        initialize() 
+        initialize()
+print("hel")
