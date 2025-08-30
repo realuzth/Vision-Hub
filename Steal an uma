@@ -3409,4 +3409,4 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("21")
+print("fe21")
