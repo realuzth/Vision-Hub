@@ -1309,182 +1309,90 @@ local function lockDoor()
     end
 end
 
--- Collect cash function for Umamusume
+-- UPDATED Collect cash function for Umamusume (using CollectButton with touch interest)
 local function collectAllCash()
-    local player = Services.Players.LocalPlayer
     local lockerRoom = getPlayerLockerRoom()
-    if not lockerRoom then 
-        print("[Auto Collect] No locker room found for player")
-        return 
-    end
+    if not lockerRoom then return end
 
-    print("[Auto Collect] Found locker room: " .. lockerRoom.Name)
     local lockers = lockerRoom:FindFirstChild("Lockers")
-    if not lockers then 
-        print("[Auto Collect] No Lockers folder found in room")
-        return 
-    end
+    if not lockers then return end
 
     local collected = 0
     local attempted = 0
     
     for _, locker in pairs(lockers:GetChildren()) do
-        if locker.Name:match("Locker%d+") then
+        if locker.Name:match("Locker%d+") and locker:FindFirstChild("Button") then
             attempted = attempted + 1
-            print("[Auto Collect] Processing " .. locker.Name)
-            local success = false
+            local button = locker.Button
+            local lockerCollected = false
             
-            -- Path 1: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX.Button.CollectButton
-            local collectButton = locker:FindFirstChild("Button") and locker.Button:FindFirstChild("CollectButton")
-            if collectButton and not success then
-                pcall(function()
-                    if collectButton:FindFirstChildOfClass("ClickDetector") then
-                        fireclickdetector(collectButton:FindFirstChildOfClass("ClickDetector"))
-                        success = true
-                        collected = collected + 1
-                        print("[Auto Collect] ✅ " .. locker.Name .. " via CollectButton ClickDetector")
-                    elseif collectButton:FindFirstChildOfClass("ProximityPrompt") then
-                        fireproximityprompt(collectButton:FindFirstChildOfClass("ProximityPrompt"))
-                        success = true
-                        collected = collected + 1
-                        print("[Auto Collect] ✅ " .. locker.Name .. " via CollectButton ProximityPrompt")
-                    end
-                end)
-            end
-            
-            -- Path 2: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX.Button.CashClaimManager
-            if not success then
-                local cashManager = locker:FindFirstChild("Button") and locker.Button:FindFirstChild("CashClaimManager")
-                if cashManager then
+            -- NEW: Try CollectButton with touch interest first
+            local collectButton = button:FindFirstChild("CollectButton")
+            if collectButton and not lockerCollected then
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                     pcall(function()
-                        if cashManager:IsA("RemoteEvent") then
-                            cashManager:FireServer()
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via CashClaimManager RemoteEvent")
-                        elseif cashManager:FindFirstChildOfClass("ClickDetector") then
-                            fireclickdetector(cashManager:FindFirstChildOfClass("ClickDetector"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via CashClaimManager ClickDetector")
-                        elseif cashManager:FindFirstChildOfClass("ProximityPrompt") then
-                            fireproximityprompt(cashManager:FindFirstChildOfClass("ProximityPrompt"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via CashClaimManager ProximityPrompt")
-                        end
+                        firetouchinterest(collectButton, player.Character.HumanoidRootPart, 0)
+                        task.wait(0.05)
+                        firetouchinterest(collectButton, player.Character.HumanoidRootPart, 1)
+                        lockerCollected = true
+                        collected = collected + 1
                     end)
                 end
             end
             
-            -- Path 3: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX.Button:GetChildren()[2]
-            if not success then
-                local button = locker:FindFirstChild("Button")
-                if button then
-                    local children = button:GetChildren()
-                    if children[2] then
-                        local secondChild = children[2]
+            -- Fallback to original methods if CollectButton doesn't work
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local clickDetector = part:FindFirstChildOfClass("ClickDetector")
+                        if clickDetector then
+                            pcall(function()
+                                fireclickdetector(clickDetector)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local proximityPrompt = part:FindFirstChildOfClass("ProximityPrompt")
+                        if proximityPrompt then
+                            pcall(function()
+                                fireproximityprompt(proximityPrompt)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                local cashManager = button:FindFirstChild("CashClaimManager")
+                if cashManager then
+                    if cashManager:IsA("RemoteEvent") then
                         pcall(function()
-                            if secondChild:FindFirstChildOfClass("ClickDetector") then
-                                fireclickdetector(secondChild:FindFirstChildOfClass("ClickDetector"))
-                                success = true
-                                collected = collected + 1
-                                print("[Auto Collect] ✅ " .. locker.Name .. " via Button[2] ClickDetector")
-                            elseif secondChild:FindFirstChildOfClass("ProximityPrompt") then
-                                fireproximityprompt(secondChild:FindFirstChildOfClass("ProximityPrompt"))
-                                success = true
-                                collected = collected + 1
-                                print("[Auto Collect] ✅ " .. locker.Name .. " via Button[2] ProximityPrompt")
-                            elseif secondChild:IsA("RemoteEvent") then
-                                secondChild:FireServer()
-                                success = true
-                                collected = collected + 1
-                                print("[Auto Collect] ✅ " .. locker.Name .. " via Button[2] RemoteEvent")
-                            end
+                            cashManager:FireServer()
+                            lockerCollected = true
+                            collected = collected + 1
                         end)
                     end
                 end
             end
             
-            -- Path 4: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX.Button (direct)
-            if not success then
-                local button = locker:FindFirstChild("Button")
-                if button then
-                    pcall(function()
-                        if button:FindFirstChildOfClass("ClickDetector") then
-                            fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Button ClickDetector")
-                        elseif button:FindFirstChildOfClass("ProximityPrompt") then
-                            fireproximityprompt(button:FindFirstChildOfClass("ProximityPrompt"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Button ProximityPrompt")
-                        end
-                    end)
-                end
+            if lockerCollected then
+                task.wait(0.02)
             end
-            
-            -- Path 5: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX.Part
-            if not success then
-                local part = locker:FindFirstChild("Part")
-                if part then
-                    pcall(function()
-                        if part:FindFirstChildOfClass("ClickDetector") then
-                            fireclickdetector(part:FindFirstChildOfClass("ClickDetector"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Part ClickDetector")
-                        elseif part:FindFirstChildOfClass("ProximityPrompt") then
-                            fireproximityprompt(part:FindFirstChildOfClass("ProximityPrompt"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Part ProximityPrompt")
-                        end
-                    end)
-                end
-            end
-            
-            -- Path 6: workspace.Map.Rooms.LockerRoomX.Lockers.LockerX:GetChildren()[11]
-            if not success then
-                local children = locker:GetChildren()
-                if children[11] then
-                    local eleventhChild = children[11]
-                    pcall(function()
-                        if eleventhChild:FindFirstChildOfClass("ClickDetector") then
-                            fireclickdetector(eleventhChild:FindFirstChildOfClass("ClickDetector"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Child[11] ClickDetector")
-                        elseif eleventhChild:FindFirstChildOfClass("ProximityPrompt") then
-                            fireproximityprompt(eleventhChild:FindFirstChildOfClass("ProximityPrompt"))
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Child[11] ProximityPrompt")
-                        elseif eleventhChild:IsA("RemoteEvent") then
-                            eleventhChild:FireServer()
-                            success = true
-                            collected = collected + 1
-                            print("[Auto Collect] ✅ " .. locker.Name .. " via Child[11] RemoteEvent")
-                        end
-                    end)
-                end
-            end
-            
-            if not success then
-                print("[Auto Collect] ❌ Failed to collect from " .. locker.Name)
-            end
-            
-            task.wait(0.01) -- Small delay between lockers
         end
     end
     
-    if attempted > 0 then
-        print(string.format("💰 Auto Collect: %d/%d lockers collected", collected, attempted))
-    else
-        print("[Auto Collect] No valid lockers found")
-    end
+    print("💰 Collected from " .. collected .. "/" .. attempted .. " lockers")
 end
 
 -- Auto Lock System
@@ -3501,4 +3409,4 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("pr0")
+print("hel")
