@@ -1102,7 +1102,7 @@ function AutoBuySystem:followTarget(target)
     if isCharacterPurchased(target) then return false end
 
     if humanoid and humanoid.WalkSpeed ~= 21 then
-        humanoid.WalkSpeed = 21
+        humanoid.WalkSpeed = 30
     end
 
     local startTime = tick()
@@ -3409,4 +3409,4 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("hel")
+print("21")
