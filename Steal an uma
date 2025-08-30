@@ -403,6 +403,7 @@ local CHARACTER_DATABASE = {
     ["Narita Brian"] = {rarity = "Common", tier = 7, baseChar = "Narita Brian", income = 80}
 }
 
+-- Only enable characters with webhooks by default
 local DEFAULT_ENABLED_CHARACTERS = {
     "Kitasan Black", "Satono Diamond", "Symboli Rudolf", 
     "Emperor", "Grass Wonder", "Special Week", "Silence Suzuka",
@@ -430,8 +431,7 @@ local function getSortedCharacters()
             data.tier = tierMap[data.rarity] or 8
         end
         if not data.baseChar then
-            local cleanName = name:gsub("Golden ", ""):gsub("Diamond ", "")
-            data.baseChar = cleanName
+            data.baseChar = name
         end
     end
     
@@ -2137,7 +2137,7 @@ function UIManager:create()
     self.elements = self.elements or {}
 
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "VolleyballVision"
+    screenGui.Name = "UnluckysVision"
     screenGui.Parent = playerGui
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
@@ -2524,12 +2524,7 @@ function UIManager:createSearchSection(parent)
     searchCorner.CornerRadius = UDim.new(0, 8)
     searchCorner.Parent = searchBox
     
-    local exactToggle = self:createToggleButton("Exact Match", UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 45), function(isToggled)
-        gameData.filters.exactMatch = isToggled
-        self:updateCharacterList()
-        DataManager:save(gameData)
-    end, gameData.filters.exactMatch)
-    exactToggle.Parent = searchContainer
+    -- Exact match toggle removed as requested
     
     local enabledToggle = self:createToggleButton("Enabled Only", UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 45), function(isToggled)
         gameData.filters.enabledOnly = isToggled
@@ -2546,19 +2541,11 @@ function UIManager:createSearchSection(parent)
     end, gameData.filters.selectedRarity or "All")
     rarityFilter.Parent = searchContainer
     
-    local mutationFilter = self:createFilterDropdown("Mutation", {"All", "Base", "Golden", "Diamond"}, 
-        UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 80), function(selected)
-        gameData.filters.selectedMutation = selected == "All" and nil or selected
-        self:updateCharacterList()
-        DataManager:save(gameData)
-    end, gameData.filters.selectedMutation or "All")
-    mutationFilter.Parent = searchContainer
+    -- Mutation filter removed as requested
     
     self.elements.searchBox = searchBox
-    self.elements.exactToggle = exactToggle
     self.elements.enabledToggle = enabledToggle
     self.elements.rarityFilter = rarityFilter
-    self.elements.mutationFilter = mutationFilter
     
     self:connectSearchEvents()
 end
@@ -2732,9 +2719,6 @@ function UIManager:populateCharacterList()
         nameContainer.Parent = itemFrame
         
         local displayName = charName
-        if charData.mutation then
-            displayName = charData.mutation:sub(1,1) .. ". " .. charName:gsub("^" .. charData.mutation .. " ", "")
-        end
         
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Size = UDim2.new(1, -25, 0.6, 0)
@@ -2758,27 +2742,7 @@ function UIManager:populateCharacterList()
         infoLabel.TextXAlignment = Enum.TextXAlignment.Left
         infoLabel.Parent = nameContainer
         
-        if charData.mutation then
-            local mutationIcon = Instance.new("Frame")
-            mutationIcon.Size = UDim2.new(0, 18, 0, 18)
-            mutationIcon.Position = UDim2.new(1, -22, 0.5, -9)
-            mutationIcon.BackgroundColor3 = MUTATION_COLORS[charData.mutation]
-            mutationIcon.BorderSizePixel = 0
-            mutationIcon.Parent = itemFrame
-            
-            local mutationCorner = Instance.new("UICorner")
-            mutationCorner.CornerRadius = UDim.new(1, 0)
-            mutationCorner.Parent = mutationIcon
-            
-            local mutationLabel = Instance.new("TextLabel")
-            mutationLabel.Size = UDim2.new(1, 0, 1, 0)
-            mutationLabel.BackgroundTransparency = 1
-            mutationLabel.Text = charData.mutation:sub(1,1)
-            mutationLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-            mutationLabel.Font = Enum.Font.GothamBold
-            mutationLabel.TextSize = 10
-            mutationLabel.Parent = mutationIcon
-        end
+        -- Mutation icon removed as requested
         
         self.elements.characterItems[charName] = {
             frame = itemFrame,
@@ -2812,9 +2776,7 @@ function UIManager:updateCharacterList()
             
             local visibleCount = 0
             local searchText = gameData.filters.searchText
-            local exactMatch = gameData.filters.exactMatch
             local rarityFilter = gameData.filters.selectedRarity
-            local mutationFilter = gameData.filters.selectedMutation
             local enabledOnly = gameData.filters.enabledOnly
             
             for _, charName in ipairs(characterNames) do
@@ -2828,25 +2790,14 @@ function UIManager:updateCharacterList()
                 if searchText ~= "" then
                     local nameToSearch = charName:lower()
                     local baseCharToSearch = charData.baseChar:lower()
-                    
-                    if exactMatch then
-                        shouldShow = (nameToSearch == searchText) or (baseCharToSearch == searchText) or (nameToSearch:find(searchText, 1, true))
-                    else
-                        shouldShow = nameToSearch:find(searchText, 1, true) ~= nil or baseCharToSearch:find(searchText, 1, true) ~= nil
-                    end
+                    shouldShow = nameToSearch:find(searchText, 1, true) ~= nil or baseCharToSearch:find(searchText, 1, true) ~= nil
                 end
                 
                 if shouldShow and rarityFilter and rarityFilter ~= "All" then
                     shouldShow = charData.rarity == rarityFilter
                 end
                 
-                if shouldShow and mutationFilter and mutationFilter ~= "All" then
-                    if mutationFilter == "Base" then
-                        shouldShow = charData.mutation == nil
-                    else
-                        shouldShow = charData.mutation == mutationFilter
-                    end
-                end
+                -- Mutation filter removed as requested
                 
                 if shouldShow and enabledOnly then
                     shouldShow = trackData.enabled
@@ -2988,9 +2939,6 @@ function UIManager:updateCharacterList()
                     nameContainer.Parent = row
                     
                     local displayName = charName
-                    if charData.mutation then
-                        displayName = charData.mutation:sub(1,1) .. ". " .. charName:gsub("^" .. charData.mutation .. " ", "")
-                    end
                     
                     local nameLabel = Instance.new("TextLabel")
                     nameLabel.Size = UDim2.new(1, -20, 1, 0)
@@ -3003,18 +2951,7 @@ function UIManager:updateCharacterList()
                     nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
                     nameLabel.Parent = nameContainer
                     
-                    if charData.mutation then
-                        local mutIcon = Instance.new("Frame")
-                        mutIcon.Size = UDim2.new(0, 12, 0, 12)
-                        mutIcon.Position = UDim2.new(1, -15, 0.5, -6)
-                        mutIcon.BackgroundColor3 = MUTATION_COLORS[charData.mutation]
-                        mutIcon.BorderSizePixel = 0
-                        mutIcon.Parent = nameContainer
-                        
-                        local mutCorner = Instance.new("UICorner")
-                        mutCorner.CornerRadius = UDim.new(1, 0)
-                        mutCorner.Parent = mutIcon
-                    end
+                    -- Mutation icon removed as requested
                     
                     local statusContainer = Instance.new("Frame")
                     statusContainer.Size = UDim2.new(0.12, 0, 1, 0)
@@ -3047,7 +2984,13 @@ function UIManager:updateCharacterList()
                         label.Size = UDim2.new(col.width, -5, 1, 0)
                         label.Position = UDim2.new(col.pos, 0, 0, 0)
                         label.BackgroundTransparency = 1
-                        label.Text = col.name == "priority" and string.format("%.1f", (10-charData.tier) * charData.multiplier) or "0"
+                        -- Priority based on rarity tier (1=highest, 7=lowest)
+                        local rarityPriority = {
+                            Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4,
+                            Rare = 5, Uncommon = 6, Common = 7
+                        }
+                        local priority = rarityPriority[charData.rarity] or 8
+                        label.Text = col.name == "priority" and tostring(priority) or "0"
                         label.TextColor3 = Color3.fromRGB(200, 200, 200)
                         label.Font = Enum.Font.Gotham
                         label.TextSize = 10
@@ -3343,11 +3286,17 @@ function UIManager:updateCharacterList()
                 row.labels.lastSeen.Text = "Never"
             end
 
-            row.labels.priority.Text = string.format("%d", charData.income or 0)
+            -- Priority based on rarity tier (1=highest, 7=lowest)
+            local rarityPriority = {
+                Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4,
+                Rare = 5, Uncommon = 6, Common = 7
+            }
+            local priority = rarityPriority[charData.rarity] or 8
+            row.labels.priority.Text = tostring(priority)
         end
 
         local function initialize()
-        print("[VolleyballVision] Initializing...")
+        print("[UnluckysVision] Initializing...")
 
         -- Load saved data or fallback to defaults
         gameData = DataManager:load() or DataManager:getDefaultData()
@@ -3372,20 +3321,20 @@ function UIManager:updateCharacterList()
         UIManager:updateCharacterList()
 
         -- Initialize auto systems with saved states
-        print("[VolleyballVision] Initializing auto systems...")
+        print("[UnluckysVision] Initializing auto systems...")
         
         if gameData.settings.autoLockEnabled then
-            print("[VolleyballVision] Restoring Auto Lock system...")
+            print("[UnluckysVision] Restoring Auto Lock system...")
             AutoLock:toggle()
         end
 
         if gameData.settings.autoCollectEnabled then
-            print("[VolleyballVision] Restoring Auto Collect system...")
+            print("[UnluckysVision] Restoring Auto Collect system...")
             AutoCollect:toggle()
         end
         
         if gameData.settings.autoBuyEnabled then
-            print("[VolleyballVision] Restoring Auto Buy system...")
+            print("[UnluckysVision] Restoring Auto Buy system...")
             AutoBuySystem:toggle()
         end
 
