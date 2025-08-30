@@ -1,8 +1,8 @@
--- Volleyball Vision v1.0
+-- Unluckys Vision v1.0
 -- Enhanced character tracking system for Haikyuu-style games
 -- Created by uzth
 
-local SCRIPT_NAME = "Volleyball Vision"
+local SCRIPT_NAME = "Unluckys Vision"
 local SCRIPT_VERSION = "made by uzth"
 
 repeat task.wait() until game:IsLoaded()
@@ -129,12 +129,12 @@ function WebhookManager:notifyCharacterSpawn(characterName, rarity, serverId)
             },
             {
                 name = "🎮 Game",
-                value = "Volleyball Vision",
+                value = "Unluckys Vision",
                 inline = true
             }
         },
         footer = {
-            text = "Volleyball Vision Enhanced • " .. os.date("%B %d, %Y")
+            text = "Unluckys Vision Enhanced • " .. os.date("%B %d, %Y")
         },
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -179,7 +179,7 @@ function WebhookManager:notifyScriptExecution()
     
     local data = {
         embeds = {{
-            title = "🚀 Volleyball Vision Enhanced - Script Started",
+            title = "🚀 Unluckys Vision Enhanced - Script Started",
             description = "Enhanced script is now running!\n\n```\nServer ID: " .. serverId .. "\n```\n*Click to copy server ID above*",
             color = 3066993,
             fields = {
@@ -210,7 +210,7 @@ function WebhookManager:notifyScriptExecution()
                 },
                 {
                     name = "🎮 Game Info",
-                    value = "**Volleyball Vision**\nPlace ID: " .. tostring(game.PlaceId),
+                    value = "**Unluckys Vision**\nPlace ID: " .. tostring(game.PlaceId),
                     inline = true
                 },
                 {
@@ -220,7 +220,7 @@ function WebhookManager:notifyScriptExecution()
                 }
             },
             footer = {
-                text = "Volleyball Vision Enhanced • Executed successfully"
+                text = "Unluckys Vision Enhanced • Executed successfully"
             },
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         }}
@@ -1560,15 +1560,15 @@ end
 
 function DataManager:getBasePath()
     local paths = {
-        function() return getexecutordirectory() .. "/VolleyballVision" end,
-        function() return getscriptsdirectory() .. "/../VolleyballVision" end,
-        function() return "VolleyballVision" end
+        function() return getexecutordirectory() .. "/UnluckysHub" end,
+        function() return getscriptsdirectory() .. "/../UnluckysHub" end,
+        function() return "UnluckysHub" end
     }
     for _, pathFunc in ipairs(paths) do
         local success, path = pcall(pathFunc)
         if success and path then return path end
     end
-    return "VolleyballVision"
+    return "UnluckysHub"
 end
 
 function DataManager:getAccountPath()
@@ -2231,7 +2231,7 @@ function UIManager:create()
     self.elements = self.elements or {}
 
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "VolleyballVision"
+    screenGui.Name = "UnluckysHub"
     screenGui.Parent = playerGui
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
@@ -3423,7 +3423,7 @@ function UIManager:updateCharacterList()
         end
 
         local function initialize()
-        print("[VolleyballVision] Initializing...")
+        print("[UnluckysHub] Initializing...")
 
         -- Load saved data or fallback to defaults
         gameData = DataManager:load() or DataManager:getDefaultData()
@@ -3448,20 +3448,20 @@ function UIManager:updateCharacterList()
         UIManager:updateCharacterList()
 
         -- Initialize auto systems with saved states
-        print("[VolleyballVision] Initializing auto systems...")
+        print("[UnluckysHub] Initializing auto systems...")
         
         if gameData.settings.autoLockEnabled then
-            print("[VolleyballVision] Restoring Auto Lock system...")
+            print("[UnluckysHub] Restoring Auto Lock system...")
             AutoLock:toggle()
         end
 
         if gameData.settings.autoCollectEnabled then
-            print("[VolleyballVision] Restoring Auto Collect system...")
+            print("[UnluckysHub] Restoring Auto Collect system...")
             AutoCollect:toggle()
         end
         
         if gameData.settings.autoBuyEnabled then
-            print("[VolleyballVision] Restoring Auto Buy system...")
+            print("[UnluckysHub] Restoring Auto Buy system...")
             AutoBuySystem:toggle()
         end
 
@@ -3472,11 +3472,11 @@ function UIManager:updateCharacterList()
         task.delay(0.5, function()
             GameState.scriptActive = true
             CharacterTracker:updateCharacterStates()
-            print("[VolleyballVision] Initialization complete.")
-            print("[VolleyballVision] Tracking " .. tostring(GameState.trackingEnabled) .. " characters.")
-            print("[VolleyballVision] Auto Lock: " .. (gameData.settings.autoLockEnabled and "ON" or "OFF"))
-            print("[VolleyballVision] Auto Collect: " .. (gameData.settings.autoCollectEnabled and "ON" or "OFF"))
-            print("[VolleyballVision] Auto Buy: " .. (gameData.settings.autoBuyEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Initialization complete.")
+            print("[UnluckysHub] Tracking " .. tostring(GameState.trackingEnabled) .. " characters.")
+            print("[UnluckysHub] Auto Lock: " .. (gameData.settings.autoLockEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Auto Collect: " .. (gameData.settings.autoCollectEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Auto Buy: " .. (gameData.settings.autoBuyEnabled and "ON" or "OFF"))
         end)
     end
 
