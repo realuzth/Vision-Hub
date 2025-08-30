@@ -1313,116 +1313,96 @@ end
 local function collectAllCash()
     local player = Services.Players.LocalPlayer
     local lockerRoom = getPlayerLockerRoom()
-    if not lockerRoom then return end
+    if not lockerRoom then 
+        print("[Auto Collect] No locker room found for player")
+        return 
+    end
 
+    print("[Auto Collect] Found locker room: " .. lockerRoom.Name)
     local lockers = lockerRoom:FindFirstChild("Lockers")
-    if not lockers then return end
+    if not lockers then 
+        print("[Auto Collect] No Lockers folder found in room")
+        return 
+    end
 
     local collected = 0
     local attempted = 0
     
     for _, locker in pairs(lockers:GetChildren()) do
-        if locker.Name:match("Locker%d+") and locker:FindFirstChild("Button") then
+        if locker.Name:match("Locker%d+") then
             attempted = attempted + 1
-            local button = locker.Button
-            local lockerCollected = false
+            print("[Auto Collect] Processing " .. locker.Name)
             
-            -- Try the new Umamusume paths first
-            local collectButton = button:FindFirstChild("CollectButton")
-            if collectButton and not lockerCollected then
-                pcall(function()
-                    if collectButton:IsA("RemoteEvent") then
-                        collectButton:FireServer()
-                    elseif collectButton:FindFirstChildOfClass("ClickDetector") then
-                        fireclickdetector(collectButton:FindFirstChildOfClass("ClickDetector"))
-                    elseif collectButton:FindFirstChildOfClass("ProximityPrompt") then
-                        fireproximityprompt(collectButton:FindFirstChildOfClass("ProximityPrompt"))
-                    end
-                    lockerCollected = true
-                    collected = collected + 1
-                end)
-            end
-            
-            -- Try CashClaimManager for Umamusume
-            if not lockerCollected then
-                local cashManager = button:FindFirstChild("CashClaimManager")
-                if cashManager then
+            -- Look for Button in locker
+            local button = locker:FindFirstChild("Button")
+            if button then
+                local success = false
+                
+                -- Try CollectButton first (Umamusume path)
+                local collectButton = button:FindFirstChild("CollectButton")
+                if collectButton and not success then
                     pcall(function()
-                        if cashManager:IsA("RemoteEvent") then
-                            cashManager:FireServer()
-                        elseif cashManager:FindFirstChildOfClass("RemoteEvent") then
-                            cashManager:FindFirstChildOfClass("RemoteEvent"):FireServer()
+                        if collectButton:FindFirstChildOfClass("ClickDetector") then
+                            fireclickdetector(collectButton:FindFirstChildOfClass("ClickDetector"))
+                            success = true
+                            collected = collected + 1
+                            print("[Auto Collect] Collected from " .. locker.Name .. " via CollectButton ClickDetector")
+                        elseif collectButton:FindFirstChildOfClass("ProximityPrompt") then
+                            fireproximityprompt(collectButton:FindFirstChildOfClass("ProximityPrompt"))
+                            success = true
+                            collected = collected + 1
+                            print("[Auto Collect] Collected from " .. locker.Name .. " via CollectButton ProximityPrompt")
                         end
-                        lockerCollected = true
-                        collected = collected + 1
                     end)
                 end
-            end
-            
-            -- Try button's children (second child as specified)
-            if not lockerCollected then
-                local children = button:GetChildren()
-                if children[2] and not lockerCollected then
-                    local secondChild = children[2]
-                    pcall(function()
-                        if secondChild:FindFirstChildOfClass("ClickDetector") then
-                            fireclickdetector(secondChild:FindFirstChildOfClass("ClickDetector"))
-                        elseif secondChild:FindFirstChildOfClass("ProximityPrompt") then
-                            fireproximityprompt(secondChild:FindFirstChildOfClass("ProximityPrompt"))
-                        elseif secondChild:IsA("RemoteEvent") then
-                            secondChild:FireServer()
-                        end
-                        lockerCollected = true
-                        collected = collected + 1
-                    end)
-                end
-            end
-            
-            -- Fallback: try all button children
-            if not lockerCollected then
-                for _, part in pairs(button:GetChildren()) do
-                    if part:IsA("BasePart") and not lockerCollected then
-                        local clickDetector = part:FindFirstChildOfClass("ClickDetector")
-                        if clickDetector then
-                            pcall(function()
-                                fireclickdetector(clickDetector)
-                                lockerCollected = true
+                
+                -- Try CashClaimManager (Umamusume path)
+                if not success then
+                    local cashManager = button:FindFirstChild("CashClaimManager")
+                    if cashManager then
+                        pcall(function()
+                            if cashManager:IsA("RemoteEvent") then
+                                cashManager:FireServer()
+                                success = true
                                 collected = collected + 1
-                            end)
-                            if lockerCollected then break end
-                        end
-                        
-                        local proximityPrompt = part:FindFirstChildOfClass("ProximityPrompt")
-                        if proximityPrompt and not lockerCollected then
-                            pcall(function()
-                                fireproximityprompt(proximityPrompt)
-                                lockerCollected = true
-                                collected = collected + 1
-                            end)
-                            if lockerCollected then break end
-                        end
+                                print("[Auto Collect] Collected from " .. locker.Name .. " via CashClaimManager RemoteEvent")
+                            end
+                        end)
                     end
                 end
-            end
-            
-            -- Final fallback: touch interaction
-            if not lockerCollected and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local buttonPart = button:FindFirstChild("Part2") or button:FindFirstChild("Part")
-                if buttonPart then
-                    pcall(function()
-                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 0)
-                        task.wait(0.05)
-                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 1)
-                        lockerCollected = true
-                        collected = collected + 1
-                    end)
+                
+                -- Try button's second child (Umamusume path)
+                if not success then
+                    local children = button:GetChildren()
+                    if children[2] then
+                        local secondChild = children[2]
+                        pcall(function()
+                            if secondChild:FindFirstChildOfClass("ClickDetector") then
+                                fireclickdetector(secondChild:FindFirstChildOfClass("ClickDetector"))
+                                success = true
+                                collected = collected + 1
+                                print("[Auto Collect] Collected from " .. locker.Name .. " via second child ClickDetector")
+                            elseif secondChild:FindFirstChildOfClass("ProximityPrompt") then
+                                fireproximityprompt(secondChild:FindFirstChildOfClass("ProximityPrompt"))
+                                success = true
+                                collected = collected + 1
+                                print("[Auto Collect] Collected from " .. locker.Name .. " via second child ProximityPrompt")
+                            end
+                        end)
+                    end
                 end
+            else
+                print("[Auto Collect] No Button found in " .. locker.Name)
             end
             
-            if lockerCollected then
-                task.wait(0.02)
-            end
+            task.wait(0.01) -- Small delay between lockers
         end
+    end
+    
+    if attempted > 0 then
+        print(string.format("💰 Auto Collect: %d/%d lockers collected", collected, attempted))
+    else
+        print("[Auto Collect] No valid lockers found")
     end
 end
 
@@ -1705,7 +1685,7 @@ function DataManager:getDefaultData()
             currentCount = 0,
             status = "never",
             lastSeen = 0,
-            sessionSpawns = 0,
+            sessionSpawns = 0, -- Always start at 0 for new session
             totalTime = 0
         }
     end
@@ -3381,6 +3361,13 @@ function UIManager:updateCharacterList()
 
         -- Load saved data or fallback to defaults
         gameData = DataManager:load() or DataManager:getDefaultData()
+        
+        -- Reset session spawns to 0 on script start
+        if gameData.characters then
+            for charName, trackData in pairs(gameData.characters) do
+                trackData.sessionSpawns = 0
+            end
+        end
 
         -- Safety: ensure characters table exists
         gameData.characters = gameData.characters or {}
@@ -3458,4 +3445,4 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("hel")
+print("hels")
