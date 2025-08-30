@@ -367,49 +367,66 @@ local GameState = {
 }
 
 local CHARACTER_DATABASE = {
-    ["Kitasan Black"] = {rarity = "Secret", tier = 1, baseChar = "Kitasan Black", income = 40000},
-    ["Satono Diamond"] = {rarity = "Secret", tier = 1, baseChar = "Satono Diamond", income = 38000},
-    ["Symboli Rudolf"] = {rarity = "Awakened", tier = 2, baseChar = "Symboli Rudolf", income = 34200},
-    ["Emperor"] = {rarity = "Awakened", tier = 2, baseChar = "Emperor", income = 32000},
-    ["Grass Wonder"] = {rarity = "Awakened", tier = 2, baseChar = "Grass Wonder", income = 30000},
-    ["Special Week"] = {rarity = "Awakened", tier = 2, baseChar = "Special Week", income = 28000},
-    ["Silence Suzuka"] = {rarity = "Awakened", tier = 2, baseChar = "Silence Suzuka", income = 25000},
-    ["Tokai Teio"] = {rarity = "Mythic", tier = 3, baseChar = "Tokai Teio", income = 17300},
-    ["Mejiro McQueen"] = {rarity = "Mythic", tier = 3, baseChar = "Mejiro McQueen", income = 15000},
-    ["Gold Ship"] = {rarity = "Mythic", tier = 3, baseChar = "Gold Ship", income = 12000},
-    ["Vodka"] = {rarity = "Mythic", tier = 3, baseChar = "Vodka", income = 10000},
-    ["Daiwa Scarlet"] = {rarity = "Mythic", tier = 3, baseChar = "Daiwa Scarlet", income = 8500},
-    ["Oguri Cap"] = {rarity = "Legendary", tier = 4, baseChar = "Oguri Cap", income = 5500},
-    ["Taiki Shuttle"] = {rarity = "Legendary", tier = 4, baseChar = "Taiki Shuttle", income = 4800},
-    ["Mejiro Dober"] = {rarity = "Legendary", tier = 4, baseChar = "Mejiro Dober", income = 4200},
-    ["Agnes Tachyon"] = {rarity = "Legendary", tier = 4, baseChar = "Agnes Tachyon", income = 3800},
-    ["Seiun Sky"] = {rarity = "Legendary", tier = 4, baseChar = "Seiun Sky", income = 3500},
-    ["Mihono Bourbon"] = {rarity = "Legendary", tier = 4, baseChar = "Mihono Bourbon", income = 3200},
-    ["Maruzensky"] = {rarity = "Rare", tier = 5, baseChar = "Maruzensky", income = 2800},
-    ["Fuji Kiseki"] = {rarity = "Rare", tier = 5, baseChar = "Fuji Kiseki", income = 2400},
-    ["Mayano Top Gun"] = {rarity = "Rare", tier = 5, baseChar = "Mayano Top Gun", income = 2000},
-    ["Manhattan Cafe"] = {rarity = "Rare", tier = 5, baseChar = "Manhattan Cafe", income = 1800},
-    ["Biwa Hayahide"] = {rarity = "Rare", tier = 5, baseChar = "Biwa Hayahide", income = 1500},
-    ["Narita Taishin"] = {rarity = "Rare", tier = 5, baseChar = "Narita Taishin", income = 1200},
-    ["Winning Ticket"] = {rarity = "Uncommon", tier = 6, baseChar = "Winning Ticket", income = 900},
-    ["Air Groove"] = {rarity = "Uncommon", tier = 6, baseChar = "Air Groove", income = 750},
-    ["Seeking the Pearl"] = {rarity = "Uncommon", tier = 6, baseChar = "Seeking the Pearl", income = 600},
-    ["Haru Urara"] = {rarity = "Uncommon", tier = 6, baseChar = "Haru Urara", income = 450},
-    ["King Halo"] = {rarity = "Uncommon", tier = 6, baseChar = "King Halo", income = 350},
-    ["Yukino Bijin"] = {rarity = "Uncommon", tier = 6, baseChar = "Yukino Bijin", income = 280},
-    ["Hishi Amazon"] = {rarity = "Common", tier = 7, baseChar = "Hishi Amazon", income = 200},
-    ["Zenno Rob Roy"] = {rarity = "Common", tier = 7, baseChar = "Zenno Rob Roy", income = 150},
-    ["Sakura Bakushin O"] = {rarity = "Common", tier = 7, baseChar = "Sakura Bakushin O", income = 100},
-    ["Narita Brian"] = {rarity = "Common", tier = 7, baseChar = "Narita Brian", income = 80}
+    -- Secret Rarity
+    ["Kitasan Black (Tracen Academy)"] = {rarity = "Secret", tier = 1, baseChar = "Kitasan Black (Tracen Academy)", income = 40000},
+    ["Satono Diamond (Tracen Academy)"] = {rarity = "Secret", tier = 1, baseChar = "Satono Diamond (Tracen Academy)", income = 38000},
+    
+    -- Awakened Rarity
+    ["Symboli Rudolf (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Symboli Rudolf (Tracen Academy)", income = 34200},
+    ["Emperor (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Emperor (Tracen Academy)", income = 32000},
+    ["Grass Wonder (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Grass Wonder (Tracen Academy)", income = 30000},
+    ["Special Week (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Special Week (Tracen Academy)", income = 28000},
+    ["Silence Suzuka (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Silence Suzuka (Tracen Academy)", income = 25000},
+    
+    -- Mythic Rarity
+    ["Tokai Teio (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Tokai Teio (Tracen Academy)", income = 17300},
+    ["Mejiro McQueen (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Mejiro McQueen (Tracen Academy)", income = 15000},
+    ["Gold Ship (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Gold Ship (Tracen Academy)", income = 12000},
+    ["Vodka (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Vodka (Tracen Academy)", income = 10000},
+    ["Daiwa Scarlet (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Daiwa Scarlet (Tracen Academy)", income = 8500},
+    
+    -- Legendary Rarity
+    ["Oguri Cap (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Oguri Cap (Tracen Academy)", income = 5500},
+    ["Taiki Shuttle (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Taiki Shuttle (Tracen Academy)", income = 4800},
+    ["Mejiro Dober (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Mejiro Dober (Tracen Academy)", income = 4200},
+    ["Agnes Tachyon (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Agnes Tachyon (Tracen Academy)", income = 3800},
+    ["Seiun Sky (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Seiun Sky (Tracen Academy)", income = 3500},
+    ["Mihono Bourbon (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Mihono Bourbon (Tracen Academy)", income = 3200},
+    
+    -- Rare Rarity
+    ["Maruzensky (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Maruzensky (Tracen Academy)", income = 2800},
+    ["Fuji Kiseki (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Fuji Kiseki (Tracen Academy)", income = 2400},
+    ["Mayano Top Gun (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Mayano Top Gun (Tracen Academy)", income = 2000},
+    ["Manhattan Cafe (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Manhattan Cafe (Tracen Academy)", income = 1800},
+    ["Biwa Hayahide (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Biwa Hayahide (Tracen Academy)", income = 1500},
+    ["Narita Taishin (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Narita Taishin (Tracen Academy)", income = 1200},
+    
+    -- Uncommon Rarity
+    ["Winning Ticket (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Winning Ticket (Tracen Academy)", income = 900},
+    ["Air Groove (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Air Groove (Tracen Academy)", income = 750},
+    ["Seeking the Pearl (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Seeking the Pearl (Tracen Academy)", income = 600},
+    ["Haru Urara (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Haru Urara (Tracen Academy)", income = 450},
+    ["King Halo (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "King Halo (Tracen Academy)", income = 350},
+    ["Yukino Bijin (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Yukino Bijin (Tracen Academy)", income = 280},
+    
+    -- Common Rarity
+    ["Hishi Amazon (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Hishi Amazon (Tracen Academy)", income = 200},
+    ["Zenno Rob Roy (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Zenno Rob Roy (Tracen Academy)", income = 150},
+    ["Sakura Bakushin O (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Sakura Bakushin O (Tracen Academy)", income = 100},
+    ["Narita Brian (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Narita Brian (Tracen Academy)", income = 80},
+    
+    -- Temporary Characters (will be removed when game removes them)
+    ["Temporary Character 1"] = {rarity = "Rare", tier = 5, baseChar = "Temporary Character 1", income = 1000},
+    ["Temporary Character 2"] = {rarity = "Uncommon", tier = 6, baseChar = "Temporary Character 2", income = 500}
 }
 
 -- Only enable characters with webhooks by default
 local DEFAULT_ENABLED_CHARACTERS = {
-    "Kitasan Black", "Satono Diamond", "Symboli Rudolf", 
-    "Emperor", "Grass Wonder", "Special Week", "Silence Suzuka",
-    "Tokai Teio", "Mejiro McQueen", "Gold Ship", "Vodka",
-    "Daiwa Scarlet", "Oguri Cap", "Taiki Shuttle", "Mejiro Dober",
-    "Agnes Tachyon", "Seiun Sky", "Mihono Bourbon"
+    "Kitasan Black (Tracen Academy)", "Satono Diamond (Tracen Academy)", "Symboli Rudolf (Tracen Academy)", 
+    "Emperor (Tracen Academy)", "Grass Wonder (Tracen Academy)", "Special Week (Tracen Academy)", "Silence Suzuka (Tracen Academy)",
+    "Tokai Teio (Tracen Academy)", "Mejiro McQueen (Tracen Academy)", "Gold Ship (Tracen Academy)", "Vodka (Tracen Academy)",
+    "Daiwa Scarlet (Tracen Academy)", "Oguri Cap (Tracen Academy)", "Taiki Shuttle (Tracen Academy)", "Mejiro Dober (Tracen Academy)",
+    "Agnes Tachyon (Tracen Academy)", "Seiun Sky (Tracen Academy)", "Mihono Bourbon (Tracen Academy)"
 }
 
 -- Use CHARACTER_DATABASE directly without mutations
@@ -417,12 +434,12 @@ local COMPLETE_DATABASE = CHARACTER_DATABASE
 
 local function getSortedCharacters()
     local orderedCharacters = {
-        "Kitasan Black", "Satono Diamond", "Symboli Rudolf", "Emperor", "Grass Wonder", "Special Week", "Silence Suzuka",
-        "Tokai Teio", "Mejiro McQueen", "Gold Ship", "Vodka", "Daiwa Scarlet", "Oguri Cap", "Taiki Shuttle",
-        "Mejiro Dober", "Agnes Tachyon", "Seiun Sky", "Mihono Bourbon", "Maruzensky", "Fuji Kiseki",
-        "Mayano Top Gun", "Manhattan Cafe", "Biwa Hayahide", "Narita Taishin", "Winning Ticket", "Air Groove",
-        "Seeking the Pearl", "Haru Urara", "King Halo", "Yukino Bijin", "Hishi Amazon", "Zenno Rob Roy",
-        "Sakura Bakushin O", "Narita Brian"
+        "Kitasan Black (Tracen Academy)", "Satono Diamond (Tracen Academy)", "Symboli Rudolf (Tracen Academy)", "Emperor (Tracen Academy)", "Grass Wonder (Tracen Academy)", "Special Week (Tracen Academy)", "Silence Suzuka (Tracen Academy)",
+        "Tokai Teio (Tracen Academy)", "Mejiro McQueen (Tracen Academy)", "Gold Ship (Tracen Academy)", "Vodka (Tracen Academy)", "Daiwa Scarlet (Tracen Academy)", "Oguri Cap (Tracen Academy)", "Taiki Shuttle (Tracen Academy)",
+        "Mejiro Dober (Tracen Academy)", "Agnes Tachyon (Tracen Academy)", "Seiun Sky (Tracen Academy)", "Mihono Bourbon (Tracen Academy)", "Maruzensky (Tracen Academy)", "Fuji Kiseki (Tracen Academy)",
+        "Mayano Top Gun (Tracen Academy)", "Manhattan Cafe (Tracen Academy)", "Biwa Hayahide (Tracen Academy)", "Narita Taishin (Tracen Academy)", "Winning Ticket (Tracen Academy)", "Air Groove (Tracen Academy)",
+        "Seeking the Pearl (Tracen Academy)", "Haru Urara (Tracen Academy)", "King Halo (Tracen Academy)", "Yukino Bijin (Tracen Academy)", "Hishi Amazon (Tracen Academy)", "Zenno Rob Roy (Tracen Academy)",
+        "Sakura Bakushin O (Tracen Academy)", "Narita Brian (Tracen Academy)", "Temporary Character 1", "Temporary Character 2"
     }
     
     for name, data in pairs(COMPLETE_DATABASE) do
@@ -1286,25 +1303,44 @@ local function lockDoor()
     end
 end
 
--- Collect cash function for Umamusume game using CollectButton
+--- Collect cash function for Umamusume game using correct paths
 local function collectAllCash()
-    local lockerRoom = getPlayerLockerRoom()
-    if not lockerRoom then return end
-
-    local lockers = lockerRoom:FindFirstChild("Lockers")
-    if not lockers then return end
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
 
     local collected = 0
     local attempted = 0
     
+    -- Use the correct path: workspace.Map.Rooms.LockerRoom[PlayerNumber].Lockers.Locker[Number].CollectButton
+    local map = workspace:FindFirstChild("Map")
+    if not map then return end
+    
+    local rooms = map:FindFirstChild("Rooms")
+    if not rooms then return end
+    
+    -- Find player's locker room
+    local playerSpawn = getPlayerSpawnLocation()
+    if not playerSpawn then return end
+    
+    local playerNumber = playerSpawn.Name:match("%d+")
+    if not playerNumber then return end
+    
+    local lockerRoom = rooms:FindFirstChild("LockerRoom" .. playerNumber)
+    if not lockerRoom then return end
+    
+    local lockers = lockerRoom:FindFirstChild("Lockers")
+    if not lockers then return end
+    
+    -- Collect from all lockers in the player's room
     for _, locker in pairs(lockers:GetChildren()) do
-        if locker.Name:match("Locker%d+") and locker:FindFirstChild("CollectButton") then
-            attempted = attempted + 1
-            local collectButton = locker.CollectButton
-            local lockerCollected = false
-            
-            -- Use touch interest on CollectButton for Umamusume game
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and not lockerCollected then
+        if locker.Name:match("Locker%d+") then
+            local collectButton = locker:FindFirstChild("CollectButton")
+            if collectButton then
+                attempted = attempted + 1
+                local lockerCollected = false
+                
+                -- Use touch interest on CollectButton for Umamusume game
                 pcall(function()
                     firetouchinterest(collectButton, player.Character.HumanoidRootPart, 0)
                     task.wait(0.05)
@@ -1312,12 +1348,17 @@ local function collectAllCash()
                     lockerCollected = true
                     collected = collected + 1
                 end)
-            end
-            
-            if lockerCollected then
-                task.wait(0.02)
+                
+                if lockerCollected then
+                    task.wait(0.02)
+                end
             end
         end
+    end
+    
+    if collected > 0 then
+        AutoCollect.totalCollected = (AutoCollect.totalCollected or 0) + collected
+        AutoCollect.collectionsThisSession = (AutoCollect.collectionsThisSession or 0) + collected
     end
 end
 
