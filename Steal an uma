@@ -3225,7 +3225,7 @@ function UIManager:updateCharacterList()
         function UIManager:updateTrackingCount()
             local enabledCount = 0
             local totalCount = 0
-                for _, charName in ipairs(characterNames) do
+            for _, charName in ipairs(characterNames) do
                 local trackData = gameData.characters[charName]
                 if trackData.enabled then
                     enabledCount = enabledCount + 1
