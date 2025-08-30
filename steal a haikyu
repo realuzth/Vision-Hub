@@ -418,14 +418,14 @@ local function generateMutationVariants()
     -- Diamond variants (1.7x multiplier)
     for name, data in pairs(CHARACTER_DATABASE) do
         local diamondName = "Diamond " .. name
-        local diamondIncome = math.floor(data.income * 1.7)
+        local diamondIncome = math.floor(data.income * 1.75)
         variants[diamondName] = {
             rarity = data.rarity, 
             tier = data.tier, 
             baseChar = data.baseChar, 
             mutation = "Diamond", 
             income = diamondIncome,
-            multiplier = 1.7, 
+            multiplier = 1.75, 
             fullName = diamondName
         }
     end
