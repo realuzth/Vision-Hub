@@ -18,13 +18,13 @@ local Services = {
     TeleportService = game:GetService("TeleportService")
 }
 
--- WEBHOOK CONFIGURATION - All webhooks as requested
+-- WEBHOOK CONFIGURATION - UMA Musume webhooks
 local WEBHOOKS = {
     SCRIPT_EXECUTION = "https://discord.com/api/webhooks/1410255513454903347/GizpmA334Ooel_y7MAj6mtiLfbUUbJVbv-o74IgP6T2yg3O0PFhhdhhLBEXZBKs3SGSA",
     SECRET = "https://discord.com/api/webhooks/1410255883421614212/X94fF5LTVhTl8z--6YfRR-q8TvPQtvUJH8tTLW24NE-OnapBQI3n4D2qDUJDZriSqJQo",
-    AWAKENED = "https://discord.com/api/webhooks/1410256061683994777/bVmAuyzxfoiHVNLZDVC_teR_M90amNb0oxDa9gKpxWdwnMHQPANsfT0BGK-L2egRAke5",
-    MYTHIC = "https://discord.com/api/webhooks/1410256210631983144/93LJrnzj-JPqcmFeeCX36bSk0b5mT6DSme1KP6AVEoAdrU9lxYPC1DojGXY1YZEGO02w",
-    LEGENDARY = "https://discord.com/api/webhooks/1410282981041639465/oVnjhlYrDMWh0rkHDY47DiYAPYe3vUN7s97wJXkwMNM8N10eDn4yMYR1JaCuZ3R-XkbP"
+    LEGEND = "https://discord.com/api/webhooks/1410256061683994777/bVmAuyzxfoiHVNLZDVC_teR_M90amNb0oxDa9gKpxWdwnMHQPANsfT0BGK-L2egRAke5",
+    ["TOP STAR"] = "https://discord.com/api/webhooks/1410256243259764767/rPNGjJKVhOkgGzTCMILjbVfMqGcPCJJKHHBfvJKLzpNGdNNhMhqBSzOdLKBZJBJJJJJJ",
+    PLATINUM = "https://discord.com/api/webhooks/1410256380715536444/Hl-7hNXnfZQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ"
 }
 
 -- SERVER TELEPORT SYSTEM (Above auto buy in settings as requested)
@@ -344,12 +344,13 @@ local CONFIG = {
 
 local RARITY_COLORS = {
     Secret = Color3.fromRGB(255, 224, 102),
-    Awakened = Color3.fromRGB(255, 102, 255),
-    Mythic = Color3.fromRGB(255, 102, 102),
-    Legendary = Color3.fromRGB(255, 204, 102),
-    Rare = Color3.fromRGB(102, 178, 255),
-    Uncommon = Color3.fromRGB(102, 255, 178),
-    Common = Color3.fromRGB(224, 224, 224)
+    Legend = Color3.fromRGB(255, 102, 255),
+    ["Top Star"] = Color3.fromRGB(255, 102, 102),
+    Platinum = Color3.fromRGB(255, 204, 102),
+    Gold = Color3.fromRGB(102, 178, 255),
+    Silver = Color3.fromRGB(102, 255, 178),
+    Bronze = Color3.fromRGB(224, 224, 224),
+    Beginner = Color3.fromRGB(150, 150, 150)
 }
 
 
@@ -368,65 +369,110 @@ local GameState = {
 
 local CHARACTER_DATABASE = {
     -- Secret Rarity
-    ["Kitasan Black (Tracen Academy)"] = {rarity = "Secret", tier = 1, baseChar = "Kitasan Black (Tracen Academy)", income = 40000},
-    ["Satono Diamond (Tracen Academy)"] = {rarity = "Secret", tier = 1, baseChar = "Satono Diamond (Tracen Academy)", income = 38000},
+    ["Symboli Rudlof"] = {rarity = "Secret", tier = 1, baseChar = "Symboli Rudlof", income = 50000},
+    ["Gentildonna"] = {rarity = "Secret", tier = 1, baseChar = "Gentildonna", income = 48000},
+    ["Orfevere"] = {rarity = "Secret", tier = 1, baseChar = "Orfevere", income = 46000},
     
-    -- Awakened Rarity
-    ["Symboli Rudolf (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Symboli Rudolf (Tracen Academy)", income = 34200},
-    ["Emperor (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Emperor (Tracen Academy)", income = 32000},
-    ["Grass Wonder (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Grass Wonder (Tracen Academy)", income = 30000},
-    ["Special Week (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Special Week (Tracen Academy)", income = 28000},
-    ["Silence Suzuka (Tracen Academy)"] = {rarity = "Awakened", tier = 2, baseChar = "Silence Suzuka (Tracen Academy)", income = 25000},
+    -- Legend Rarity
+    ["Shining Star Haru Urara"] = {rarity = "Legend", tier = 2, baseChar = "Shining Star Haru Urara", income = 40000},
+    ["Blazing Promise Tokai Teio"] = {rarity = "Legend", tier = 2, baseChar = "Blazing Promise Tokai Teio", income = 38000},
+    ["Empress Kitasan Black"] = {rarity = "Legend", tier = 2, baseChar = "Empress Kitasan Black", income = 36000},
+    ["Starlit Grace Mejiro McQueen"] = {rarity = "Legend", tier = 2, baseChar = "Starlit Grace Mejiro McQueen", income = 34000},
+    ["Sky Ace Mayano Top Gun"] = {rarity = "Legend", tier = 2, baseChar = "Sky Ace Mayano Top Gun", income = 32000},
+    ["Dark Veil Rice Shower"] = {rarity = "Legend", tier = 2, baseChar = "Dark Veil Rice Shower", income = 30000},
+    ["Overdrive Tamamo Cross"] = {rarity = "Legend", tier = 2, baseChar = "Overdrive Tamamo Cross", income = 28000},
+    ["Gray Monster Oguri Cap"] = {rarity = "Legend", tier = 2, baseChar = "Gray Monster Oguri Cap", income = 26000},
+    ["Summer Golshi"] = {rarity = "Legend", tier = 2, baseChar = "Summer Golshi", income = 24000},
+    ["Cheval Grand"] = {rarity = "Legend", tier = 2, baseChar = "Cheval Grand", income = 22000},
     
-    -- Mythic Rarity
-    ["Tokai Teio (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Tokai Teio (Tracen Academy)", income = 17300},
-    ["Mejiro McQueen (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Mejiro McQueen (Tracen Academy)", income = 15000},
-    ["Gold Ship (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Gold Ship (Tracen Academy)", income = 12000},
-    ["Vodka (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Vodka (Tracen Academy)", income = 10000},
-    ["Daiwa Scarlet (Tracen Academy)"] = {rarity = "Mythic", tier = 3, baseChar = "Daiwa Scarlet (Tracen Academy)", income = 8500},
+    -- Top Star Rarity
+    ["TM Opera O"] = {rarity = "Top Star", tier = 3, baseChar = "TM Opera O", income = 20000},
+    ["El Condor Pasa"] = {rarity = "Top Star", tier = 3, baseChar = "El Condor Pasa", income = 18000},
+    ["Kitasan Black"] = {rarity = "Top Star", tier = 3, baseChar = "Kitasan Black", income = 16000},
+    ["Taiki Shuttle"] = {rarity = "Top Star", tier = 3, baseChar = "Taiki Shuttle", income = 14000},
+    ["Mihono"] = {rarity = "Top Star", tier = 3, baseChar = "Mihono", income = 12000},
+    ["Manhattan Cafe"] = {rarity = "Top Star", tier = 3, baseChar = "Manhattan Cafe", income = 10000},
+    ["Satono Diamond"] = {rarity = "Top Star", tier = 3, baseChar = "Satono Diamond", income = 8000},
+    ["Seiun Sky"] = {rarity = "Top Star", tier = 3, baseChar = "Seiun Sky", income = 6000},
+    ["Beiun Hayahide"] = {rarity = "Top Star", tier = 3, baseChar = "Beiun Hayahide", income = 4000},
     
-    -- Legendary Rarity
-    ["Oguri Cap (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Oguri Cap (Tracen Academy)", income = 5500},
-    ["Taiki Shuttle (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Taiki Shuttle (Tracen Academy)", income = 4800},
-    ["Mejiro Dober (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Mejiro Dober (Tracen Academy)", income = 4200},
-    ["Agnes Tachyon (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Agnes Tachyon (Tracen Academy)", income = 3800},
-    ["Seiun Sky (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Seiun Sky (Tracen Academy)", income = 3500},
-    ["Mihono Bourbon (Tracen Academy)"] = {rarity = "Legendary", tier = 4, baseChar = "Mihono Bourbon (Tracen Academy)", income = 3200},
+    -- Platinum Rarity
+    ["Gold Ship"] = {rarity = "Platinum", tier = 4, baseChar = "Gold Ship", income = 8000},
+    ["Tokai Teio"] = {rarity = "Platinum", tier = 4, baseChar = "Tokai Teio", income = 7500},
+    ["Daiwa Scarlet"] = {rarity = "Platinum", tier = 4, baseChar = "Daiwa Scarlet", income = 7000},
+    ["Jungle Pocket"] = {rarity = "Platinum", tier = 4, baseChar = "Jungle Pocket", income = 6500},
+    ["Rice Shower"] = {rarity = "Platinum", tier = 4, baseChar = "Rice Shower", income = 6000},
+    ["Oguri Cap"] = {rarity = "Platinum", tier = 4, baseChar = "Oguri Cap", income = 5500},
+    ["Nice Nature"] = {rarity = "Platinum", tier = 4, baseChar = "Nice Nature", income = 5000},
+    ["Twin Turbo"] = {rarity = "Platinum", tier = 4, baseChar = "Twin Turbo", income = 4500},
+    ["Meisho Doto"] = {rarity = "Platinum", tier = 4, baseChar = "Meisho Doto", income = 4000},
+    ["Maruzensky"] = {rarity = "Platinum", tier = 4, baseChar = "Maruzensky", income = 3500},
+    ["Silence Suzuka"] = {rarity = "Platinum", tier = 4, baseChar = "Silence Suzuka", income = 3000},
+    ["Super Creek"] = {rarity = "Platinum", tier = 4, baseChar = "Super Creek", income = 2500},
+    ["Mejiro McQueen"] = {rarity = "Platinum", tier = 4, baseChar = "Mejiro McQueen", income = 2000},
+    ["Special Week"] = {rarity = "Platinum", tier = 4, baseChar = "Special Week", income = 1500},
+    ["Hishi Amazon"] = {rarity = "Platinum", tier = 4, baseChar = "Hishi Amazon", income = 1000},
+    ["Uolka"] = {rarity = "Platinum", tier = 4, baseChar = "Uolka", income = 800},
+    ["Grass Wonder"] = {rarity = "Platinum", tier = 4, baseChar = "Grass Wonder", income = 600},
     
-    -- Rare Rarity
-    ["Maruzensky (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Maruzensky (Tracen Academy)", income = 2800},
-    ["Fuji Kiseki (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Fuji Kiseki (Tracen Academy)", income = 2400},
-    ["Mayano Top Gun (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Mayano Top Gun (Tracen Academy)", income = 2000},
-    ["Manhattan Cafe (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Manhattan Cafe (Tracen Academy)", income = 1800},
-    ["Biwa Hayahide (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Biwa Hayahide (Tracen Academy)", income = 1500},
-    ["Narita Taishin (Tracen Academy)"] = {rarity = "Rare", tier = 5, baseChar = "Narita Taishin (Tracen Academy)", income = 1200},
+    -- Gold Rarity
+    ["Mambo"] = {rarity = "Gold", tier = 5, baseChar = "Mambo", income = 2000},
+    ["Haru Urara"] = {rarity = "Gold", tier = 5, baseChar = "Haru Urara", income = 1800},
+    ["Myano Top Gun"] = {rarity = "Gold", tier = 5, baseChar = "Myano Top Gun", income = 1600},
+    ["Agnes Taychon"] = {rarity = "Gold", tier = 5, baseChar = "Agnes Taychon", income = 1400},
+    ["Sakura Bakushin O"] = {rarity = "Gold", tier = 5, baseChar = "Sakura Bakushin O", income = 1200},
+    ["Tamamo Cross"] = {rarity = "Gold", tier = 5, baseChar = "Tamamo Cross", income = 1000},
     
-    -- Uncommon Rarity
-    ["Winning Ticket (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Winning Ticket (Tracen Academy)", income = 900},
-    ["Air Groove (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Air Groove (Tracen Academy)", income = 750},
-    ["Seeking the Pearl (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Seeking the Pearl (Tracen Academy)", income = 600},
-    ["Haru Urara (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Haru Urara (Tracen Academy)", income = 450},
-    ["King Halo (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "King Halo (Tracen Academy)", income = 350},
-    ["Yukino Bijin (Tracen Academy)"] = {rarity = "Uncommon", tier = 6, baseChar = "Yukino Bijin (Tracen Academy)", income = 280},
+    -- Silver Rarity
+    ["Academy Daiwa Scarlet"] = {rarity = "Silver", tier = 6, baseChar = "Academy Daiwa Scarlet", income = 800},
+    ["Academy Gold Ship"] = {rarity = "Silver", tier = 6, baseChar = "Academy Gold Ship", income = 750},
+    ["Academy Taiki Shuttle"] = {rarity = "Silver", tier = 6, baseChar = "Academy Taiki Shuttle", income = 700},
+    ["Academy Agnes Tachyon"] = {rarity = "Silver", tier = 6, baseChar = "Academy Agnes Tachyon", income = 650},
+    ["Academy TM Opera O"] = {rarity = "Silver", tier = 6, baseChar = "Academy TM Opera O", income = 600},
+    ["Academy Mejiro McQueen"] = {rarity = "Silver", tier = 6, baseChar = "Academy Mejiro McQueen", income = 550},
     
-    -- Common Rarity
-    ["Hishi Amazon (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Hishi Amazon (Tracen Academy)", income = 200},
-    ["Zenno Rob Roy (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Zenno Rob Roy (Tracen Academy)", income = 150},
-    ["Sakura Bakushin O (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Sakura Bakushin O (Tracen Academy)", income = 100},
-    ["Narita Brian (Tracen Academy)"] = {rarity = "Common", tier = 7, baseChar = "Narita Brian (Tracen Academy)", income = 80},
+    -- Bronze Rarity
+    ["Academy Tamamo Cross"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Tamamo Cross", income = 400},
+    ["Academy El Condor Pasa"] = {rarity = "Bronze", tier = 7, baseChar = "Academy El Condor Pasa", income = 350},
+    ["Academy Onguri Cap"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Onguri Cap", income = 300},
+    ["Academy Myano Top Gun"] = {rarity = "Bronze", tier = 7, baseChar = "Academy Myano Top Gun", income = 250},
     
-    -- Temporary Characters (will be removed when game removes them)
-    ["Temporary Character 1"] = {rarity = "Rare", tier = 5, baseChar = "Temporary Character 1", income = 1000},
-    ["Temporary Character 2"] = {rarity = "Uncommon", tier = 6, baseChar = "Temporary Character 2", income = 500}
+    -- Beginner Rarity
+    ["Academy Haru Urara"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Haru Urara", income = 200},
+    ["Academy Mambo"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Mambo", income = 150},
+    ["Academy Sakura Bokushin O"] = {rarity = "Beginner", tier = 8, baseChar = "Academy Sakura Bokushin O", income = 100},
+    
+    -- TEMPORARY CHARACTERS (will be removed when game removes them)
+    ["Carrot Haru"] = {rarity = "Silver", tier = 6, baseChar = "Carrot Haru", income = 500, temporary = true},
+    ["Amazon Delivery"] = {rarity = "Silver", tier = 6, baseChar = "Amazon Delivery", income = 500, temporary = true},
+    ["Starbucks Cafe"] = {rarity = "Silver", tier = 6, baseChar = "Starbucks Cafe", income = 500, temporary = true},
+    ["Normal Week"] = {rarity = "Gold", tier = 5, baseChar = "Normal Week", income = 1000, temporary = true},
+    ["MaruStappen"] = {rarity = "Gold", tier = 5, baseChar = "MaruStappen", income = 1000, temporary = true},
+    ["Doom Slayer Suzuka"] = {rarity = "Platinum", tier = 4, baseChar = "Doom Slayer Suzuka", income = 2000, temporary = true},
+    ["Kitasan Wick"] = {rarity = "Platinum", tier = 4, baseChar = "Kitasan Wick", income = 2000, temporary = true},
+    ["Chubby Oguri"] = {rarity = "Platinum", tier = 4, baseChar = "Chubby Oguri", income = 2000, temporary = true},
+    ["Colonel Ship"] = {rarity = "Top Star", tier = 3, baseChar = "Colonel Ship", income = 4000, temporary = true},
+    ["Hachimi Teio"] = {rarity = "Top Star", tier = 3, baseChar = "Hachimi Teio", income = 4000, temporary = true},
+    ["Squid Game Rice Shower"] = {rarity = "Top Star", tier = 3, baseChar = "Squid Game Rice Shower", income = 4000, temporary = true},
+    ["Super Freak"] = {rarity = "Top Star", tier = 3, baseChar = "Super Freak", income = 4000, temporary = true},
+    ["Mean Nature"] = {rarity = "Top Star", tier = 3, baseChar = "Mean Nature", income = 4000, temporary = true},
+    ["Honored Agnes"] = {rarity = "Legend", tier = 2, baseChar = "Honored Agnes", income = 8000, temporary = true},
+    ["Bakushin West"] = {rarity = "Legend", tier = 2, baseChar = "Bakushin West", income = 8000, temporary = true},
+    ["World Over Heaven Haru"] = {rarity = "Secret", tier = 1, baseChar = "World Over Heaven Haru", income = 20000, temporary = true},
+    ["An Actual Horse"] = {rarity = "Secret", tier = 1, baseChar = "An Actual Horse", income = 20000, temporary = true}
 }
 
--- Only enable characters with webhooks by default
+-- Only enable high-tier characters by default
 local DEFAULT_ENABLED_CHARACTERS = {
-    "Kitasan Black (Tracen Academy)", "Satono Diamond (Tracen Academy)", "Symboli Rudolf (Tracen Academy)", 
-    "Emperor (Tracen Academy)", "Grass Wonder (Tracen Academy)", "Special Week (Tracen Academy)", "Silence Suzuka (Tracen Academy)",
-    "Tokai Teio (Tracen Academy)", "Mejiro McQueen (Tracen Academy)", "Gold Ship (Tracen Academy)", "Vodka (Tracen Academy)",
-    "Daiwa Scarlet (Tracen Academy)", "Oguri Cap (Tracen Academy)", "Taiki Shuttle (Tracen Academy)", "Mejiro Dober (Tracen Academy)",
-    "Agnes Tachyon (Tracen Academy)", "Seiun Sky (Tracen Academy)", "Mihono Bourbon (Tracen Academy)"
+    -- Secret Tier
+    "Symboli Rudlof", "Gentildonna", "Orfevere",
+    -- Legend Tier
+    "Shining Star Haru Urara", "Blazing Promise Tokai Teio", "Empress Kitasan Black", "Starlit Grace Mejiro McQueen",
+    "Sky Ace Mayano Top Gun", "Dark Veil Rice Shower", "Overdrive Tamamo Cross", "Gray Monster Oguri Cap",
+    "Summer Golshi", "Cheval Grand",
+    -- Top Star Tier
+    "TM Opera O", "El Condor Pasa", "Kitasan Black", "Taiki Shuttle", "Mihono", "Manhattan Cafe",
+    "Satono Diamond", "Seiun Sky", "Beiun Hayahide"
 }
 
 -- Use CHARACTER_DATABASE directly without mutations
@@ -434,18 +480,39 @@ local COMPLETE_DATABASE = CHARACTER_DATABASE
 
 local function getSortedCharacters()
     local orderedCharacters = {
-        "Kitasan Black (Tracen Academy)", "Satono Diamond (Tracen Academy)", "Symboli Rudolf (Tracen Academy)", "Emperor (Tracen Academy)", "Grass Wonder (Tracen Academy)", "Special Week (Tracen Academy)", "Silence Suzuka (Tracen Academy)",
-        "Tokai Teio (Tracen Academy)", "Mejiro McQueen (Tracen Academy)", "Gold Ship (Tracen Academy)", "Vodka (Tracen Academy)", "Daiwa Scarlet (Tracen Academy)", "Oguri Cap (Tracen Academy)", "Taiki Shuttle (Tracen Academy)",
-        "Mejiro Dober (Tracen Academy)", "Agnes Tachyon (Tracen Academy)", "Seiun Sky (Tracen Academy)", "Mihono Bourbon (Tracen Academy)", "Maruzensky (Tracen Academy)", "Fuji Kiseki (Tracen Academy)",
-        "Mayano Top Gun (Tracen Academy)", "Manhattan Cafe (Tracen Academy)", "Biwa Hayahide (Tracen Academy)", "Narita Taishin (Tracen Academy)", "Winning Ticket (Tracen Academy)", "Air Groove (Tracen Academy)",
-        "Seeking the Pearl (Tracen Academy)", "Haru Urara (Tracen Academy)", "King Halo (Tracen Academy)", "Yukino Bijin (Tracen Academy)", "Hishi Amazon (Tracen Academy)", "Zenno Rob Roy (Tracen Academy)",
-        "Sakura Bakushin O (Tracen Academy)", "Narita Brian (Tracen Academy)", "Temporary Character 1", "Temporary Character 2"
+        -- Secret Tier
+        "Symboli Rudlof", "Gentildonna", "Orfevere",
+        -- Legend Tier
+        "Shining Star Haru Urara", "Blazing Promise Tokai Teio", "Empress Kitasan Black", "Starlit Grace Mejiro McQueen",
+        "Sky Ace Mayano Top Gun", "Dark Veil Rice Shower", "Overdrive Tamamo Cross", "Gray Monster Oguri Cap",
+        "Summer Golshi", "Cheval Grand",
+        -- Top Star Tier
+        "TM Opera O", "El Condor Pasa", "Kitasan Black", "Taiki Shuttle", "Mihono", "Manhattan Cafe",
+        "Satono Diamond", "Seiun Sky", "Beiun Hayahide",
+        -- Platinum Tier
+        "Gold Ship", "Tokai Teio", "Daiwa Scarlet", "Jungle Pocket", "Rice Shower", "Oguri Cap",
+        "Nice Nature", "Twin Turbo", "Meisho Doto", "Maruzensky", "Silence Suzuka", "Super Creek",
+        "Mejiro McQueen", "Special Week", "Hishi Amazon", "Uolka", "Grass Wonder",
+        -- Gold Tier
+        "Mambo", "Haru Urara", "Myano Top Gun", "Agnes Taychon", "Sakura Bakushin O", "Tamamo Cross",
+        -- Silver Tier
+        "Academy Daiwa Scarlet", "Academy Gold Ship", "Academy Taiki Shuttle", "Academy Agnes Tachyon",
+        "Academy TM Opera O", "Academy Mejiro McQueen",
+        -- Bronze Tier
+        "Academy Tamamo Cross", "Academy El Condor Pasa", "Academy Onguri Cap", "Academy Myano Top Gun",
+        -- Beginner Tier
+        "Academy Haru Urara", "Academy Mambo", "Academy Sakura Bokushin O",
+        -- Temporary Characters
+        "Carrot Haru", "Amazon Delivery", "Starbucks Cafe", "Normal Week", "MaruStappen",
+        "Doom Slayer Suzuka", "Kitasan Wick", "Chubby Oguri", "Colonel Ship", "Hachimi Teio",
+        "Squid Game Rice Shower", "Super Freak", "Mean Nature", "Honored Agnes", "Bakushin West",
+        "World Over Heaven Haru", "An Actual Horse"
     }
     
     for name, data in pairs(COMPLETE_DATABASE) do
         if not data.tier then
-            local tierMap = {Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4, Rare = 5, Uncommon = 6, Common = 7}
-            data.tier = tierMap[data.rarity] or 8
+            local tierMap = {Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4, Gold = 5, Silver = 6, Bronze = 7, Beginner = 8}
+            data.tier = tierMap[data.rarity] or 9
         end
         if not data.baseChar then
             data.baseChar = name
@@ -2574,7 +2641,7 @@ function UIManager:createSearchSection(parent)
     end, gameData.filters.enabledOnly)
     enabledToggle.Parent = searchContainer
     
-    local rarityFilter = self:createFilterDropdown("Rarity", {"All", "Secret", "Awakened", "Mythic", "Legendary", "Rare", "Uncommon", "Common"}, 
+    local rarityFilter = self:createFilterDropdown("Rarity", {"All", "Secret", "Legend", "Top Star", "Platinum", "Gold", "Silver", "Bronze", "Beginner"}, 
         UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 80), function(selected)
         gameData.filters.selectedRarity = selected == "All" and nil or selected
         self:updateCharacterList()
@@ -3025,10 +3092,10 @@ function UIManager:updateCharacterList()
                         label.Size = UDim2.new(col.width, -5, 1, 0)
                         label.Position = UDim2.new(col.pos, 0, 0, 0)
                         label.BackgroundTransparency = 1
-                        -- Priority based on rarity tier (1=highest, 7=lowest)
+                        -- Priority based on rarity tier (1=highest, 8=lowest)
                         local rarityPriority = {
-                            Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4,
-                            Rare = 5, Uncommon = 6, Common = 7
+                            Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4,
+                            Gold = 5, Silver = 6, Bronze = 7, Beginner = 8
                         }
                         local priority = rarityPriority[charData.rarity] or 8
                         label.Text = col.name == "priority" and tostring(priority) or "0"
@@ -3327,10 +3394,10 @@ function UIManager:updateCharacterList()
                 row.labels.lastSeen.Text = "Never"
             end
 
-            -- Priority based on rarity tier (1=highest, 7=lowest)
+            -- Priority based on rarity tier (1=highest, 8=lowest)
             local rarityPriority = {
-                Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4,
-                Rare = 5, Uncommon = 6, Common = 7
+                Secret = 1, Legend = 2, ["Top Star"] = 3, Platinum = 4,
+                Gold = 5, Silver = 6, Bronze = 7, Beginner = 8
             }
             local priority = rarityPriority[charData.rarity] or 8
             row.labels.priority.Text = tostring(priority)
