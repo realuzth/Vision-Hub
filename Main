@@ -1,9 +1,12 @@
 -- Unluckys Vision Loader v1.0
--- Multi-game loader with key system
+-- Multi-game loader with remote key system
 -- Created by uzth
 
-local VALID_KEY = "ReLEaSe!!"
+-- Remote key configuration
+local KEY_REPO_URL = "https://raw.githubusercontent.com/realuzth/Vision-Keys/main/keys.json"
+local validKeys = {}
 local keyEntered = false
+local keysLoaded = false
 
 -- Services
 local Services = {
@@ -15,6 +18,25 @@ local Services = {
 
 local player = Services.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- Remote key fetching function
+local function fetchValidKeys()
+    local success, result = pcall(function()
+        return game:HttpGet(KEY_REPO_URL)
+    end)
+    
+    if success then
+        local keyData = Services.HttpService:JSONDecode(result)
+        validKeys = keyData.keys or {}
+        keysLoaded = true
+        print("🔑 Keys loaded successfully from remote source")
+        return true
+    else
+        print("❌ Failed to fetch keys from remote source")
+        print("Error: " .. tostring(result))
+        return false
+    end
+end
 
 -- Key System UI
 local function createKeyUI()
@@ -155,16 +177,31 @@ local function createKeyUI()
     
     -- Key validation function
     local function validateKey()
-        local enteredKey = keyInput.Text
+        if not keysLoaded then
+            statusLabel.Text = "⏳ Loading keys... Please wait."
+            statusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+            return
+        end
         
-        if enteredKey == VALID_KEY then
+        local enteredKey = keyInput.Text
+        local isValidKey = false
+        
+        -- Check if entered key exists in valid keys list
+        for _, validKey in ipairs(validKeys) do
+            if enteredKey == validKey then
+                isValidKey = true
+                break
+            end
+        end
+        
+        if isValidKey then
             statusLabel.Text = "✅ Key accepted! Loading script..."
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
             keyEntered = true
             
             -- Set global validation variables
             _G.UnluckysVisionKeyValidated = true
-            _G.UnluckysVisionKey = VALID_KEY
+            _G.UnluckysVisionKey = enteredKey
             
             -- Animate out
             Services.TweenService:Create(mainFrame, TweenInfo.new(0.5), {
@@ -245,5 +282,15 @@ end
 
 -- Initialize
 print("🔐 Unluckys Vision Loader v1.0")
-print("Please enter your access key to continue...")
-createKeyUI()
+print("🔄 Fetching valid keys from remote source...")
+
+-- Fetch keys first, then create UI
+spawn(function()
+    if fetchValidKeys() then
+        print("✅ Remote keys loaded successfully")
+        createKeyUI()
+    else
+        print("❌ Failed to load keys - Script cannot continue")
+        print("Please check your internet connection and try again")
+    end
+end)
