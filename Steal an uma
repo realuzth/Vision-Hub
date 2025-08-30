@@ -1543,20 +1543,16 @@ function AutoLock:forceStop()
     self.successfulLocks = 0
 end
 
--- Auto Collect System
+-- Auto Collect System (updated for Umamusume)
 local AutoCollect = {
     active = false,
     connection = nil,
     interval = 0.5,
-    timer = 0,
-    lastLogTime = 0,
-    totalCollected = 0,
-    collectionsThisSession = 0
+    timer = 0
 }
 
 function AutoCollect:toggle()
     self.active = not self.active
-    gameData.settings.autoCollectEnabled = self.active
 
     if self.connection then
         self.connection:Disconnect()
@@ -1564,12 +1560,9 @@ function AutoCollect:toggle()
     end
 
     if self.active then
-        print("Auto Collect system STARTED")
+        print("💰 Auto Collect system STARTED")
         collectAllCash()
         self.timer = 0
-        self.lastLogTime = 0
-        self.totalCollected = 0
-        self.collectionsThisSession = 0
         
         self.connection = Services.RunService.Heartbeat:Connect(function(dt)
             self.timer = (self.timer or 0) + dt
@@ -1581,26 +1574,8 @@ function AutoCollect:toggle()
             end
         end)
     else
-        print("Auto Collect system STOPPED")
-        self.totalCollected = 0
-        self.collectionsThisSession = 0
+        print("💰 Auto Collect system STOPPED")
     end
-
-    if DataManager and DataManager.save then
-        DataManager:save(gameData)
-    end
-end
-
-function AutoCollect:forceStop()
-    if self.connection then
-        self.connection:Disconnect()
-        self.connection = nil
-    end
-    self.active = false
-    gameData.settings.autoCollectEnabled = false
-    print("Auto Collect system FORCE STOPPED")
-    self.totalCollected = 0
-    self.collectionsThisSession = 0
 end
 
 DataManager = {
@@ -3526,4 +3501,4 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("hel")
+print("pr0")
