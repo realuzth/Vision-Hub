@@ -4,23 +4,9 @@
 
 -- Remote key configuration
 local KEY_REPO_URL = "https://raw.githubusercontent.com/realuzth/Vision-Keys/main/keys.json"
-local validKeyHashes = {}
+local validKeys = {}
 local keyEntered = false
 local keysLoaded = false
-
--- Simple hash function for key obfuscation
-local function hashKey(key)
-    local hash = 0
-    local salt = "UnluckysVision2024"
-    local combined = key .. salt
-    
-    for i = 1, #combined do
-        local char = string.byte(combined, i)
-        hash = ((hash * 31) + char) % 2147483647
-    end
-    
-    return string.format("%x", hash)
-end
 
 -- Services
 local Services = {
@@ -41,12 +27,12 @@ local function fetchValidKeys()
     
     if success then
         local keyData = Services.HttpService:JSONDecode(result)
-        validKeyHashes = keyData.keyHashes or {}
+        validKeys = keyData.keys or {}
         keysLoaded = true
-        print("🔑 Key hashes loaded successfully from remote source")
+        print("🔑 Keys loaded successfully from remote source")
         return true
     else
-        print("❌ Failed to fetch key hashes from remote source")
+        print("❌ Failed to fetch keys from remote source")
         print("Error: " .. tostring(result))
         return false
     end
@@ -198,12 +184,11 @@ local function createKeyUI()
         end
         
         local enteredKey = keyInput.Text
-        local enteredKeyHash = hashKey(enteredKey)
         local isValidKey = false
         
-        -- Check if hashed key exists in valid key hashes list
-        for _, validHash in ipairs(validKeyHashes) do
-            if enteredKeyHash == validHash then
+        -- Check if entered key exists in valid keys list
+        for _, validKey in ipairs(validKeys) do
+            if enteredKey == validKey then
                 isValidKey = true
                 break
             end
@@ -216,7 +201,7 @@ local function createKeyUI()
             
             -- Set global validation variables
             _G.UnluckysVisionKeyValidated = true
-            _G.UnluckysVisionKeyHash = enteredKeyHash
+            _G.UnluckysVisionKey = enteredKey
             
             -- Animate out
             Services.TweenService:Create(mainFrame, TweenInfo.new(0.5), {
