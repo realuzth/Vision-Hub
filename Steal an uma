@@ -3377,11 +3377,11 @@ function UIManager:updateCharacterList()
         task.delay(0.5, function()
             GameState.scriptActive = true
             CharacterTracker:updateCharacterStates()
-            print("[VolleyballVision] Initialization complete.")
-            print("[VolleyballVision] Tracking " .. tostring(GameState.trackingEnabled) .. " characters.")
-            print("[VolleyballVision] Auto Lock: " .. (gameData.settings.autoLockEnabled and "ON" or "OFF"))
-            print("[VolleyballVision] Auto Collect: " .. (gameData.settings.autoCollectEnabled and "ON" or "OFF"))
-            print("[VolleyballVision] Auto Buy: " .. (gameData.settings.autoBuyEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Initialization complete.")
+            print("[UnluckysHub] Tracking " .. tostring(GameState.trackingEnabled) .. " characters.")
+            print("[UnluckysHub] Auto Lock: " .. (gameData.settings.autoLockEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Auto Collect: " .. (gameData.settings.autoCollectEnabled and "ON" or "OFF"))
+            print("[UnluckysHub] Auto Buy: " .. (gameData.settings.autoBuyEnabled and "ON" or "OFF"))
         end)
     end
 
@@ -3409,4 +3409,3 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("fe21")
