@@ -1,0 +1,3507 @@
+-- Volleyball Vision v1.0
+-- Enhanced character tracking system for Haikyuu-style games
+-- Created by uzth
+
+local SCRIPT_NAME = "Volleyball Vision"
+local SCRIPT_VERSION = "made by uzth"
+
+repeat task.wait() until game:IsLoaded()
+
+local Services = {
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+    UserInputService = game:GetService("UserInputService"),
+    SoundService = game:GetService("SoundService"),
+    VirtualInputManager = game:GetService("VirtualInputManager"),
+    HttpService = game:GetService("HttpService"),
+    TweenService = game:GetService("TweenService"),
+    TeleportService = game:GetService("TeleportService")
+}
+
+-- WEBHOOK CONFIGURATION - All webhooks as requested
+local WEBHOOKS = {
+    SCRIPT_EXECUTION = "https://discord.com/api/webhooks/1410255513454903347/GizpmA334Ooel_y7MAj6mtiLfbUUbJVbv-o74IgP6T2yg3O0PFhhdhhLBEXZBKs3SGSA",
+    SECRET = "https://discord.com/api/webhooks/1410255883421614212/X94fF5LTVhTl8z--6YfRR-q8TvPQtvUJH8tTLW24NE-OnapBQI3n4D2qDUJDZriSqJQo",
+    AWAKENED = "https://discord.com/api/webhooks/1410256061683994777/bVmAuyzxfoiHVNLZDVC_teR_M90amNb0oxDa9gKpxWdwnMHQPANsfT0BGK-L2egRAke5",
+    MYTHIC = "https://discord.com/api/webhooks/1410256210631983144/93LJrnzj-JPqcmFeeCX36bSk0b5mT6DSme1KP6AVEoAdrU9lxYPC1DojGXY1YZEGO02w",
+    LEGENDARY = "https://discord.com/api/webhooks/1410282981041639465/oVnjhlYrDMWh0rkHDY47DiYAPYe3vUN7s97wJXkwMNM8N10eDn4yMYR1JaCuZ3R-XkbP"
+}
+print("hello")
+-- Enhanced SpawnLocation Detection System
+local SPAWN_LOCATIONS = {
+    "SpawnLocation1", "SpawnLocation2", "SpawnLocation3", "SpawnLocation4",
+    "SpawnLocation5", "SpawnLocation6", "SpawnLocation7", "SpawnLocation8"
+}
+
+-- PERFECT WEBHOOK SYSTEM
+local WebhookManager = {
+    queue = {},
+    sending = false,
+    cooldowns = {}
+}
+
+function WebhookManager:sendWebhook(webhookUrl, data)
+    if not webhookUrl or not data then return end
+    
+    local success, response = pcall(function()
+        return request({
+            Url = webhookUrl,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = Services.HttpService:JSONEncode(data)
+        })
+    end)
+    
+    if success and response and response.StatusCode == 200 then
+        print("✅ Webhook sent successfully")
+    else
+        local errorMsg = "Unknown error"
+        if response then
+            errorMsg = tostring(response.StatusCode or "No status code") .. " - " .. tostring(response.StatusMessage or "No message")
+        end
+        warn("❌ Failed to send webhook: " .. errorMsg)
+    end
+end
+
+function WebhookManager:notifyCharacterSpawn(characterName, rarity, serverId)
+    local webhookUrl = WEBHOOKS[rarity:upper()]
+    if not webhookUrl then return end
+    
+    -- Prevent spam - cooldown per character
+    local cooldownKey = characterName .. "_" .. rarity
+    local now = tick()
+    if self.cooldowns[cooldownKey] and (now - self.cooldowns[cooldownKey]) < 30 then
+        return
+    end
+    self.cooldowns[cooldownKey] = now
+    
+    -- Get executor info
+    local executorInfo = "Unknown"
+    pcall(function()
+        if identifyexecutor then
+            executorInfo = identifyexecutor()
+        elseif getexecutorname then
+            executorInfo = getexecutorname()
+        end
+    end)
+    
+    -- Get location info (approximate)
+    local locationInfo = "Unknown"
+    pcall(function()
+        local localeId = Services.LocalizationService.RobloxLocaleId
+        locationInfo = localeId or "Unknown"
+    end)
+    
+    local embed = {
+        title = "🎯 " .. rarity .. " Character Spawned!",
+        description = "**" .. characterName .. "** has spawned!\n\n```\nServer ID: " .. tostring(serverId) .. "\n```\n*Click to copy server ID above*",
+        color = rarity == "Secret" and 16766566 or 
+                rarity == "Awakened" and 16711935 or
+                rarity == "Mythic" and 16711782 or
+                rarity == "Legendary" and 16763980 or 6591981,
+        fields = {
+            {
+                name = "📍 Server Info",
+                value = "```\n" .. tostring(serverId) .. "\n```",
+                inline = true
+            },
+            {
+                name = "👤 Player",
+                value = Services.Players.LocalPlayer.Name,
+                inline = true
+            },
+            {
+                name = "🕐 Time",
+                value = os.date("%X") .. " (" .. os.date("%Z") .. ")",
+                inline = true
+            },
+            {
+                name = "💻 Executor",
+                value = executorInfo,
+                inline = true
+            },
+            {
+                name = "🌍 Location",
+                value = locationInfo,
+                inline = true
+            },
+            {
+                name = "🎮 Game",
+                value = "Volleyball Vision",
+                inline = true
+            }
+        },
+        footer = {
+            text = "Volleyball Vision Enhanced • " .. os.date("%B %d, %Y")
+        },
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    
+    local data = {
+        embeds = {embed}
+    }
+    
+    spawn(function()
+        self:sendWebhook(webhookUrl, data)
+    end)
+end
+
+function WebhookManager:notifyScriptExecution()
+    -- Get executor info
+    local executorInfo = "Unknown"
+    pcall(function()
+        if identifyexecutor then
+            executorInfo = identifyexecutor()
+        elseif getexecutorname then
+            executorInfo = getexecutorname()
+        end
+    end)
+    
+    -- Get location info (approximate)
+    local locationInfo = "Unknown"
+    local countryCode = "Unknown"
+    pcall(function()
+        local localeId = Services.LocalizationService.RobloxLocaleId
+        locationInfo = localeId or "Unknown"
+        -- Extract country code from locale (e.g., "en-US" -> "US")
+        if localeId and string.find(localeId, "-") then
+            countryCode = string.upper(string.sub(localeId, string.find(localeId, "-") + 1))
+        end
+    end)
+    
+    -- Get system time info
+    local timeZone = os.date("%Z") or "Unknown"
+    local fullTime = os.date("%A, %B %d, %Y at %I:%M %p") .. " (" .. timeZone .. ")"
+    
+    local serverId = tostring(game.JobId)
+    
+    local data = {
+        embeds = {{
+            title = "🚀 Volleyball Vision Enhanced - Script Started",
+            description = "Enhanced script is now running!\n\n```\nServer ID: " .. serverId .. "\n```\n*Click to copy server ID above*",
+            color = 3066993,
+            fields = {
+                {
+                    name = "📍 Server Info",
+                    value = "```\n" .. serverId .. "\n```",
+                    inline = true
+                },
+                {
+                    name = "👤 Player",
+                    value = Services.Players.LocalPlayer.Name,
+                    inline = true
+                },
+                {
+                    name = "💻 Executor",
+                    value = executorInfo,
+                    inline = true
+                },
+                {
+                    name = "🌍 Location",
+                    value = locationInfo .. " " .. (countryCode ~= "Unknown" and "(" .. countryCode .. ")" or ""),
+                    inline = true
+                },
+                {
+                    name = "🕐 Execution Time",
+                    value = fullTime,
+                    inline = false
+                },
+                {
+                    name = "🎮 Game Info",
+                    value = "**Volleyball Vision**\nPlace ID: " .. tostring(game.PlaceId),
+                    inline = true
+                },
+                {
+                    name = "📊 Script Features",
+                    value = "• Auto Character Tracking\n• Enhanced UI System\n• Webhook Notifications\n• Auto Buy System",
+                    inline = true
+                }
+            },
+            footer = {
+                text = "Volleyball Vision Enhanced • Executed successfully"
+            },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+        }}
+    }
+    
+    spawn(function()
+        self:sendWebhook(WEBHOOKS.SCRIPT_EXECUTION, data)
+    end)
+end
+
+-- SERVER TELEPORT SYSTEM (Above auto buy in settings as requested)
+local ServerTeleporter = {
+    targetServerId = nil,
+    teleporting = false
+}
+
+function ServerTeleporter:teleportToServer(serverId)
+    if self.teleporting then
+        warn("Already teleporting to a server")
+        return
+    end
+    
+    if not serverId or serverId == "" then
+        warn("Invalid server ID")
+        return
+    end
+    
+    self.teleporting = true
+    print("🌐 Attempting to teleport to server: " .. serverId)
+    
+    local success, error = pcall(function()
+        Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, Services.Players.LocalPlayer)
+    end)
+    
+    if not success then
+        warn("❌ Failed to teleport: " .. tostring(error))
+        self.teleporting = false
+    end
+end
+
+local function getPlayerLockerRoom()
+    local player = Services.Players.LocalPlayer
+    local spawn = player.RespawnLocation or workspace:FindFirstChild("SpawnLocation" .. player.Name)
+
+    if not spawn then
+        warn("[getPlayerLockerRoom] no spawn found for " .. player.Name)
+        return nil
+    end
+
+    local idx = tonumber(spawn.Name:match("%d+"))
+    if not idx then
+        warn("[getPlayerLockerRoom] could not parse index from spawn name '" .. spawn.Name .. "'")
+        return nil
+    end
+
+    local roomsFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Rooms")
+    if not roomsFolder then
+        warn("[getPlayerLockerRoom] workspace.Map.Rooms folder missing")
+        return nil
+    end
+
+    local room = roomsFolder:FindFirstChild("LockerRoom" .. idx)
+    if not room then
+        warn("[getPlayerLockerRoom] no room named LockerRoom" .. idx)
+    end
+
+    return room
+end
+
+local player = Services.Players.LocalPlayer
+repeat task.wait() until player and player.PlayerGui
+local playerGui = player.PlayerGui
+repeat task.wait() until player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart")
+
+local character = player.Character
+local humanoid = character:FindFirstChild("Humanoid")
+local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+local CONFIG = {
+    UPDATE_INTERVAL = 0.15,
+    SAVE_INTERVAL = 3,
+    PERFORMANCE_THRESHOLD = 16.67,
+    ALARM_SOUND_ID = "rbxassetid://5476307813",
+    SOUND_VOLUME = 0.8,
+    ANIMATION_SPEED = 0.2,
+    UI_SCALE = 1.0,
+    AUTO_BUY_DISTANCE = 10,
+    MAX_FOLLOW_TIME = 60,
+    SPAWN_CHECK_DISTANCE = 50,
+    MOVEMENT_THRESHOLD = 5
+}
+
+local RARITY_COLORS = {
+    Secret = Color3.fromRGB(255, 224, 102),
+    Awakened = Color3.fromRGB(255, 102, 255),
+    Mythic = Color3.fromRGB(255, 102, 102),
+    Legendary = Color3.fromRGB(255, 204, 102),
+    Rare = Color3.fromRGB(102, 178, 255),
+    Uncommon = Color3.fromRGB(102, 255, 178),
+    Common = Color3.fromRGB(224, 224, 224)
+}
+
+local MUTATION_COLORS = {
+    Golden = Color3.fromRGB(255, 215, 0),
+    Diamond = Color3.fromRGB(185, 242, 255)
+}
+
+local GameState = {
+    scriptActive = false,
+    joinTime = os.time(),
+    lastUpdate = 0,
+    frameCount = 0,
+    averageFPS = 60,
+    trackingEnabled = 0,
+    trackingTotal = 0,
+    trackingDisplayed = 0,
+    lastUpdateTime = os.time(),
+    isMinimized = false
+}
+
+local CHARACTER_DATABASE = {
+    ["Timeskip Hinata"] = {rarity = "Secret", tier = 1, baseChar = "Hinata", income = 40000},
+    ["Awakened Tobio Kageyama"] = {rarity = "Awakened", tier = 2, baseChar = "Kageyama", income = 34200},
+    ["Awakened Kiyoomi Sakusa"] = {rarity = "Awakened", tier = 2, baseChar = "Sakusa", income = 25000},
+    ["Awakened Korai Hoshiumi"] = {rarity = "Awakened", tier = 2, baseChar = "Hoshiumi", income = 32000},
+    ["Awakened Wakatoshi Ushijima"] = {rarity = "Awakened", tier = 2, baseChar = "Ushijima", income = 28000},
+    ["Shinsuke Kita"] = {rarity = "Mythic", tier = 3, baseChar = "Kita", income = 17300},
+    ["Tobio Kageyama"] = {rarity = "Mythic", tier = 3, baseChar = "Kageyama", income = 10000},
+    ["Korai Hoshiumi"] = {rarity = "Mythic", tier = 3, baseChar = "Hoshiumi", income = 5000},
+    ["Wakatoshi Ushijima"] = {rarity = "Mythic", tier = 3, baseChar = "Ushijima", income = 4500},
+    ["Kiyoomi Sakusa"] = {rarity = "Mythic", tier = 3, baseChar = "Sakusa", income = 2250},
+    ["Keiji Akaashi"] = {rarity = "Legendary", tier = 4, baseChar = "Akaashi", income = 1295},
+    ["Takanobu Aone"] = {rarity = "Legendary", tier = 4, baseChar = "Aone", income = 1200},
+    ["Tetsuro Kuroo"] = {rarity = "Legendary", tier = 4, baseChar = "Kuroo", income = 1100},
+    ["Alt Art MSBY Atsumu"] = {rarity = "Legendary", tier = 4, baseChar = "Atsumu", income = 810},
+    ["Kotaro Bokuto"] = {rarity = "Legendary", tier = 4, baseChar = "Bokuto", income = 785},
+    ["Oikawa"] = {rarity = "Legendary", tier = 4, baseChar = "Oikawa", income = 460},
+    ["Koshi Sugawara"] = {rarity = "Rare", tier = 5, baseChar = "Sugawara", income = 210},
+    ["Kenma Kozume"] = {rarity = "Rare", tier = 5, baseChar = "Kenma", income = 160},
+    ["Yaku Morisuke"] = {rarity = "Rare", tier = 5, baseChar = "Yaku", income = 130},
+    ["Yamaguchi"] = {rarity = "Rare", tier = 5, baseChar = "Yamaguchi", income = 90},
+    ["Satori Tendo"] = {rarity = "Rare", tier = 5, baseChar = "Tendo", income = 62},
+    ["Daichi Sawamura"] = {rarity = "Rare", tier = 5, baseChar = "Daichi", income = 50},
+    ["Rintaro Suna"] = {rarity = "Uncommon", tier = 6, baseChar = "Suna", income = 28},
+    ["Atsumu Miya"] = {rarity = "Uncommon", tier = 6, baseChar = "Atsumu", income = 25},
+    ["Kei Tsukishima"] = {rarity = "Uncommon", tier = 6, baseChar = "Tsukishima", income = 22},
+    ["Shoyo Hinata"] = {rarity = "Uncommon", tier = 6, baseChar = "Hinata", income = 15},
+    ["Hajime Iwaizumi"] = {rarity = "Uncommon", tier = 6, baseChar = "Iwaizumi", income = 12},
+    ["Kentaro Kyotani"] = {rarity = "Uncommon", tier = 6, baseChar = "Kyotani", income = 10},
+    ["Yuu Nishinoya"] = {rarity = "Common", tier = 7, baseChar = "Nishinoya", income = 5},
+    ["Taketora Yamamoto"] = {rarity = "Common", tier = 7, baseChar = "Yamamoto", income = 3},
+    ["Lev Haiba"] = {rarity = "Common", tier = 7, baseChar = "Lev", income = 2},
+    ["Komori Motoya"] = {rarity = "Common", tier = 7, baseChar = "Komori", income = 1}
+}
+
+local DEFAULT_ENABLED_CHARACTERS = {
+    "Timeskip Hinata", "Awakened Tobio Kageyama", "Awakened Kiyoomi Sakusa", 
+    "Awakened Korai Hoshiumi", "Awakened Wakatoshi Ushijima", "Shinsuke Kita",
+    "Tobio Kageyama", "Korai Hoshiumi", "Wakatoshi Ushijima", "Kiyoomi Sakusa",
+    "Keiji Akaashi", "Takanobu Aone", "Tetsuro Kuroo", "Alt Art MSBY Atsumu",
+    "Kotaro Bokuto", "Oikawa"
+}
+
+local function generateMutationVariants()
+    local variants = {}
+    
+    -- Base characters
+    for name, data in pairs(CHARACTER_DATABASE) do
+        variants[name] = {
+            rarity = data.rarity, 
+            tier = data.tier, 
+            baseChar = data.baseChar, 
+            mutation = nil, 
+            income = data.income,
+            multiplier = 1.0, 
+            fullName = name
+        }
+    end
+    
+    -- Golden variants (1.2x multiplier)
+    for name, data in pairs(CHARACTER_DATABASE) do
+        local goldenName = "Golden " .. name
+        local goldenIncome = math.floor(data.income * 1.2)
+        variants[goldenName] = {
+            rarity = data.rarity, 
+            tier = data.tier, 
+            baseChar = data.baseChar, 
+            mutation = "Golden", 
+            income = goldenIncome,
+            multiplier = 1.2, 
+            fullName = goldenName
+        }
+    end
+    
+    -- Diamond variants (1.7x multiplier)
+    for name, data in pairs(CHARACTER_DATABASE) do
+        local diamondName = "Diamond " .. name
+        local diamondIncome = math.floor(data.income * 1.7)
+        variants[diamondName] = {
+            rarity = data.rarity, 
+            tier = data.tier, 
+            baseChar = data.baseChar, 
+            mutation = "Diamond", 
+            income = diamondIncome,
+            multiplier = 1.7, 
+            fullName = diamondName
+        }
+    end
+    
+    return variants
+end
+
+local COMPLETE_DATABASE = generateMutationVariants()
+
+local function getSortedCharacters()
+    local orderedCharacters = {
+        "Timeskip Hinata", "Awakened Tobio Kageyama", "Awakened Kiyoomi Sakusa", "Awakened Korai Hoshiumi",
+        "Awakened Wakatoshi Ushijima", "Shinsuke Kita", "Tobio Kageyama", "Korai Hoshiumi", "Wakatoshi Ushijima",
+        "Kiyoomi Sakusa", "Keiji Akaashi", "Takanobu Aone", "Tetsuro Kuroo", "Alt Art MSBY Atsumu",
+        "Kotaro Bokuto", "Oikawa", "Koshi Sugawara", "Kenma Kozume", "Yaku Morisuke", "Yamaguchi",
+        "Satori Tendo", "Daichi Sawamura", "Rintaro Suna", "Atsumu Miya", "Kei Tsukishima", "Shoyo Hinata",
+        "Hajime Iwaizumi", "Kentaro Kyotani", "Yuu Nishinoya", "Taketora Yamamoto", "Lev Haiba", "Komori Motoya",
+        "Golden Timeskip Hinata", "Golden Awakened Tobio Kageyama", "Golden Awakened Kiyoomi Sakusa",
+        "Golden Awakened Korai Hoshiumi", "Golden Awakened Wakatoshi Ushijima", "Golden Shinsuke Kita",
+        "Golden Tobio Kageyama", "Golden Korai Hoshiumi", "Golden Wakatoshi Ushijima", "Golden Kiyoomi Sakusa",
+        "Golden Keiji Akaashi", "Golden Takanobu Aone", "Golden Tetsuro Kuroo", "Golden Alt Art MSBY Atsumu",
+        "Golden Kotaro Bokuto", "Golden Oikawa", "Golden Koshi Sugawara", "Golden Kenma Kozume",
+        "Golden Yaku Morisuke", "Golden Yamaguchi", "Golden Satori Tendo", "Golden Daichi Sawamura",
+        "Golden Rintaro Suna", "Golden Atsumu Miya", "Golden Kei Tsukishima", "Golden Shoyo Hinata",
+        "Golden Hajime Iwaizumi", "Golden Kentaro Kyotani", "Golden Yuu Nishinoya", "Golden Taketora Yamamoto",
+        "Golden Lev Haiba", "Golden Komori Motoya", "Diamond Timeskip Hinata", "Diamond Awakened Tobio Kageyama",
+        "Diamond Awakened Kiyoomi Sakusa", "Diamond Awakened Korai Hoshiumi", "Diamond Awakened Wakatoshi Ushijima",
+        "Diamond Shinsuke Kita", "Diamond Tobio Kageyama", "Diamond Korai Hoshiumi", "Diamond Wakatoshi Ushijima",
+        "Diamond Kiyoomi Sakusa", "Diamond Keiji Akaashi", "Diamond Takanobu Aone", "Diamond Tetsuro Kuroo",
+        "Diamond Alt Art MSBY Atsumu", "Diamond Kotaro Bokuto", "Diamond Oikawa", "Diamond Koshi Sugawara",
+        "Diamond Kenma Kozume", "Diamond Yaku Morisuke", "Diamond Yamaguchi", "Diamond Satori Tendo",
+        "Diamond Daichi Sawamura", "Diamond Rintaro Suna", "Diamond Atsumu Miya", "Diamond Kei Tsukishima",
+        "Diamond Shoyo Hinata", "Diamond Hajime Iwaizumi", "Diamond Kentaro Kyotani", "Diamond Yuu Nishinoya",
+        "Diamond Taketora Yamamoto", "Diamond Lev Haiba", "Diamond Komori Motoya"
+    }
+    
+    for name, data in pairs(COMPLETE_DATABASE) do
+        if not data.tier then
+            local tierMap = {Secret = 1, Awakened = 2, Mythic = 3, Legendary = 4, Rare = 5, Uncommon = 6, Common = 7}
+            data.tier = tierMap[data.rarity] or 8
+        end
+        if not data.baseChar then
+            local cleanName = name:gsub("Golden ", ""):gsub("Diamond ", "")
+            data.baseChar = cleanName
+        end
+    end
+    
+    local finalList = {}
+    for _, charName in ipairs(orderedCharacters) do
+        if COMPLETE_DATABASE[charName] then
+            table.insert(finalList, charName)
+        end
+    end
+    
+    for name, _ in pairs(COMPLETE_DATABASE) do
+        local found = false
+        for _, orderedName in ipairs(orderedCharacters) do
+            if orderedName == name then
+                found = true
+                break
+            end
+        end
+        if not found then
+            table.insert(finalList, name)
+        end
+    end
+    
+    return finalList
+end
+
+local characterNames = getSortedCharacters()
+local gameData
+
+-- Safe save helper
+local function safeSave()
+    if DataManager and DataManager.save and gameData then
+        pcall(function()
+            DataManager:save(gameData)
+        end)
+    else
+        warn("safeSave: DataManager.save or gameData not available")
+    end
+end
+
+-- Enhanced Auto Buy System with purchase tracking and re-purchase detection
+local AutoBuySystem = {
+    active = false,
+    currentTarget = nil,
+    currentTargetName = nil,
+    purchasedCharacters = {},
+    purchaseInProgress = {},
+    characterInstances = {},  
+    movementTracking = {},    
+    spawnLocationCache = {},   
+    lastTargetUpdate = 0,
+    lastRebuyTarget = nil,
+    promptFiredBy = {},  
+    promptConnections = {}  
+}
+
+-- Get player's spawn location
+local function getPlayerSpawnLocation()
+    local player = Services.Players.LocalPlayer
+    return player.RespawnLocation or workspace:FindFirstChild("SpawnLocation" .. player.Name)
+end
+
+-- Get all other spawn locations (excluding player's)
+local function getOtherSpawnLocations()
+    local playerSpawn = getPlayerSpawnLocation()
+    local otherSpawns = {}
+    
+    for _, spawnName in ipairs(SPAWN_LOCATIONS) do
+        local spawn = workspace:FindFirstChild(spawnName)
+        if spawn and spawn ~= playerSpawn then
+            table.insert(otherSpawns, spawn)
+        end
+    end
+    
+    return otherSpawns
+end
+
+-- Enhanced movement tracking for characters
+local function trackCharacterMovement(character)
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+    
+    local uid = nil
+    pcall(function()
+        uid = getCharacterUID(character)
+    end)
+    
+    if not uid then return nil end
+    
+    local now = tick()
+    local position = character.HumanoidRootPart.Position
+    
+    -- Initialize movementTracking table if it doesn't exist
+    if not AutoBuySystem.movementTracking then
+        AutoBuySystem.movementTracking = {}
+    end
+    
+    if not AutoBuySystem.movementTracking[uid] then
+        AutoBuySystem.movementTracking[uid] = {
+            positions = {},
+            lastUpdate = now,
+            isMoving = false,
+            direction = nil,
+            targetSpawn = nil
+        }
+    end
+    
+    local tracking = AutoBuySystem.movementTracking[uid]
+    
+    -- Update position history
+    table.insert(tracking.positions, {position = position, time = now})
+    
+    -- Keep only recent positions (last 5 seconds)
+    while #tracking.positions > 0 and (now - tracking.positions[1].time) > 5 do
+        table.remove(tracking.positions, 1)
+    end
+    
+    -- Calculate movement
+    if #tracking.positions >= 2 then
+        local oldPos = tracking.positions[1].position
+        local newPos = tracking.positions[#tracking.positions].position
+        local distance = (newPos - oldPos).Magnitude
+        
+        tracking.isMoving = distance > CONFIG.MOVEMENT_THRESHOLD
+        
+        if tracking.isMoving then
+            tracking.direction = (newPos - oldPos).Unit
+        end
+    end
+    
+    return tracking
+end
+
+-- Check if character is heading towards a specific spawn location
+local function isCharacterHeadingToSpawn(character, spawnLocation)
+    if not character or not spawnLocation or not character:FindFirstChild("HumanoidRootPart") then
+        return false
+    end
+    
+    if not spawnLocation.Position then
+        return false
+    end
+    
+    local tracking = nil
+    pcall(function()
+        tracking = trackCharacterMovement(character)
+    end)
+    
+    if not tracking or not tracking.isMoving or not tracking.direction then
+        return false
+    end
+    
+    local charPos = character.HumanoidRootPart.Position
+    local spawnPos = spawnLocation.Position
+    local distanceToSpawn = (spawnPos - charPos).Magnitude
+    
+    -- If too far away, not heading there
+    if distanceToSpawn > CONFIG.SPAWN_CHECK_DISTANCE then
+        return false
+    end
+    
+    -- Calculate direction to spawn
+    local directionToSpawn = (spawnPos - charPos).Unit
+    
+    -- Check if movement direction aligns with spawn direction (dot product > 0.7 means roughly same direction)
+    local alignment = tracking.direction:Dot(directionToSpawn)
+    
+    return alignment > 0.7 and distanceToSpawn < CONFIG.SPAWN_CHECK_DISTANCE
+end
+
+-- Purchase detection using proximity prompt event monitoring
+function AutoBuySystem:isCharacterPurchasedByOther(character)
+    if not character or not character.Parent then return false end
+    if not character:FindFirstChild("HumanoidRootPart") then return false end
+    
+    local torso = character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart")
+    if not torso then return false end
+    
+    local prompt = torso:FindFirstChild("BuyPrompt") or torso:FindFirstChild("BuyPromptOLD")
+    if not prompt or not prompt:IsA("ProximityPrompt") then return false end
+    
+    -- Use robust UID generation that never returns nil
+    local uid = character.Name .. "_" .. tostring(tick()) .. "_" .. tostring(math.random(1000, 9999))
+    
+    -- Check if someone else fired this prompt (not us)
+    if self.promptFiredBy[uid] and self.promptFiredBy[uid] ~= player then
+        print("🔍 PURCHASE DETECTED: " .. character.Name .. " bought by " .. tostring(self.promptFiredBy[uid]))
+        return true
+    end
+    
+    -- Check if proximity prompt is disabled (backup method)
+    if not prompt.Enabled then
+        -- If we didn't fire it, someone else did
+        if not self.promptFiredBy[uid] or self.promptFiredBy[uid] ~= player then
+            print("🔍 PURCHASE DETECTED: " .. character.Name .. " prompt disabled by other player")
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Helper function to get unique character identifier
+local function getCharacterUID(character)
+    if not character then return nil end
+    if not character.Parent then return nil end
+    if not character.Name then return nil end
+    
+    local creationTime = nil
+    pcall(function()
+        creationTime = character:GetAttribute("CreationTime")
+    end)
+    
+    if not creationTime then
+        local success, guid = pcall(function()
+            return Services.HttpService:GenerateGUID(false)
+        end)
+        
+        if success and guid then
+            creationTime = guid
+        else
+            local pos = character:FindFirstChild("HumanoidRootPart")
+            local posString = "nopos"
+            if pos and pos.Position then
+                pcall(function()
+                    posString = string.format("%.2f_%.2f_%.2f", pos.Position.X, pos.Position.Y, pos.Position.Z)
+                end)
+            end
+            creationTime = tostring(tick()) .. "_" .. posString .. "_" .. tostring(math.random(10000, 99999))
+        end
+        
+        if creationTime then
+            pcall(function()
+                character:SetAttribute("CreationTime", creationTime)
+            end)
+        end
+    end
+    
+    if not creationTime then
+        -- Final fallback if everything fails
+        creationTime = tostring(tick()) .. "_fallback"
+    end
+    
+    return character.Name .. "_" .. tostring(creationTime)
+end
+
+-- Check if character was purchased by us specifically
+local function isCharacterPurchasedByUs(character)
+    -- Use robust UID generation that never returns nil
+    local uid = character.Name .. "_" .. tostring(tick()) .. "_" .. tostring(math.random(1000, 9999))
+    
+    -- Check if we marked this specific instance as purchased
+    local purchaseData = AutoBuySystem.purchasedCharacters[uid]
+    if purchaseData and character.Parent == workspace then
+        return true
+    end
+    
+    -- Check if we're currently trying to purchase it
+    if AutoBuySystem.purchaseInProgress[uid] then
+        return true
+    end
+    
+    -- Clean up stale purchase records
+    if purchaseData and character.Parent ~= workspace then
+        AutoBuySystem.purchasedCharacters[uid] = nil
+        if AutoBuySystem.characterInstances[character.Name] then
+            AutoBuySystem.characterInstances[character.Name][uid] = nil
+        end
+    end
+    
+    return false
+end
+
+-- Enhanced function to detect if a character respawned after being purchased by someone else
+local function detectCharacterRespawn(characterName)
+    if not AutoBuySystem.characterInstances[characterName] then return false end
+    
+    -- Get current instances in workspace
+    local currentInstances = {}
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and obj.Name == characterName then
+            local uid = getCharacterUID(obj)
+            if uid then
+                currentInstances[uid] = obj
+            end
+        end
+    end
+    
+    -- Check if any previously tracked instances are missing
+    local respawnDetected = false
+    for trackedUID, data in pairs(AutoBuySystem.characterInstances[characterName]) do
+        if not currentInstances[trackedUID] and data.character.Parent ~= workspace then
+            -- This instance disappeared, likely bought by someone else
+            -- Clear our records for this instance
+            AutoBuySystem.purchasedCharacters[trackedUID] = nil
+            AutoBuySystem.characterInstances[characterName][trackedUID] = nil
+            respawnDetected = true
+            print("🔍 Detected " .. characterName .. " was bought by someone else - cleared purchase record")
+        end
+    end
+    
+    -- Update our tracked instances to current ones
+    for uid, obj in pairs(currentInstances) do
+        if not AutoBuySystem.characterInstances[characterName][uid] then
+            -- New instance appeared
+            AutoBuySystem.characterInstances[characterName][uid] = {
+                character = obj,
+                firstSeen = tick()
+            }
+        end
+    end
+    
+    return respawnDetected
+end
+
+-- Check if character has already been purchased (enhanced version)
+local function isCharacterPurchased(character)
+    -- Check if we purchased this character
+    if isCharacterPurchasedByUs(character) then
+        return true
+    end
+    
+    -- Check if someone else purchased this character
+    if AutoBuySystem:isCharacterPurchasedByOther(character) then
+        return true
+    end
+    
+    return false
+end
+
+-- Mark character as purchased (enhanced version)
+local function markCharacterPurchased(character, success)
+    local uid = getCharacterUID(character)
+    if not uid then return end
+    
+    if success then
+        AutoBuySystem.purchasedCharacters[uid] = {
+            timestamp = tick(),
+            characterName = character.Name,
+            purchaseTime = os.time(),
+            characterInstance = character  -- Keep reference to the specific instance
+        }
+        
+        -- Update our instance tracking
+        if not AutoBuySystem.characterInstances[character.Name] then
+            AutoBuySystem.characterInstances[character.Name] = {}
+        end
+        AutoBuySystem.characterInstances[character.Name][uid] = {
+            character = character,
+            purchased = true,
+            purchaseTime = tick()
+        }
+        
+        AutoBuySystem.purchaseInProgress[uid] = nil
+        print("✅ Successfully purchased: " .. character.Name .. " (UID: " .. uid:sub(-8) .. ")")
+        
+        -- Clean up old purchase records after 5 minutes
+        spawn(function()
+            task.wait(300)
+            if AutoBuySystem.purchasedCharacters[uid] then
+                AutoBuySystem.purchasedCharacters[uid] = nil
+            end
+        end)
+    else
+        AutoBuySystem.purchaseInProgress[uid] = nil
+        print("❌ Failed to purchase: " .. character.Name)
+    end
+    
+    -- Clean up old tracking data
+    local currentTime = tick()
+    for storedUID, data in pairs(AutoBuySystem.purchasedCharacters) do
+        if type(data) == "table" and data.timestamp and (currentTime - data.timestamp) > 600 then
+            AutoBuySystem.purchasedCharacters[storedUID] = nil
+        end
+    end
+end
+
+-- Mark character as being purchased
+local function markCharacterInProgress(character)
+    local uid = getCharacterUID(character)
+    if not uid then return false end
+    
+    if AutoBuySystem.purchaseInProgress[uid] then
+        return false
+    end
+    
+    AutoBuySystem.purchaseInProgress[uid] = {
+        timestamp = tick(),
+        characterName = character.Name
+    }
+    
+    spawn(function()
+        task.wait(15)
+        if AutoBuySystem.purchaseInProgress[uid] then
+            AutoBuySystem.purchaseInProgress[uid] = nil
+        end
+    end)
+    
+    return true
+end
+
+-- Enhanced purchase function with duplicate prevention
+local function attemptPurchase(localPlayer, targetCharacter)
+    if not targetCharacter or not targetCharacter.Parent then
+        return false
+    end
+    
+    if isCharacterPurchased(targetCharacter) then
+        return false
+    end
+    
+    -- Double-check if character is heading to another spawn before purchase
+    if AutoBuySystem:isCharacterPurchasedByOther(targetCharacter) then
+        print("🚫 Aborting purchase - character heading to another spawn: " .. targetCharacter.Name)
+        return false
+    end
+    
+    if not markCharacterInProgress(targetCharacter) then
+        return false
+    end
+    
+    print("🛒 Attempting to purchase: " .. targetCharacter.Name)
+    
+    local torso = targetCharacter:FindFirstChild("Torso") or targetCharacter:FindFirstChild("HumanoidRootPart")
+    if not torso then 
+        warn("[AutoBuy] No torso/HumanoidRootPart found on target: " .. targetCharacter.Name)
+        markCharacterPurchased(targetCharacter, false)
+        return false 
+    end
+    
+    local prompt = torso:FindFirstChild("BuyPrompt") or torso:FindFirstChild("BuyPromptOLD")
+    if not prompt or not prompt:IsA("ProximityPrompt") then
+        warn("[AutoBuy] No valid proximity prompt found on: " .. targetCharacter.Name)
+        markCharacterPurchased(targetCharacter, false)
+        return false
+    end
+    
+    -- Check if prompt is still enabled (not purchased by someone else)
+    if not prompt.Enabled then
+        print("⚠️ Purchase prompt disabled - someone else bought: " .. targetCharacter.Name)
+        markCharacterPurchased(targetCharacter, false)
+        return false
+    end
+    
+    if humanoidRootPart and torso then
+        local distance = (humanoidRootPart.Position - torso.Position).Magnitude
+        if distance > CONFIG.AUTO_BUY_DISTANCE * 1.5 then
+            warn("[AutoBuy] Too far from target: " .. targetCharacter.Name .. " (distance: " .. math.floor(distance) .. ")")
+            markCharacterPurchased(targetCharacter, false)
+            return false
+        end
+    end
+    
+    -- Single attempt to prevent money drain
+    local purchaseSuccess = false
+    local success = pcall(function()
+        fireproximityprompt(prompt)
+        purchaseSuccess = true
+    end)
+    
+    if success and purchaseSuccess then
+        print("🎯 Purchase successful: " .. targetCharacter.Name)
+        markCharacterPurchased(targetCharacter, true)
+        return true
+    else
+        warn("[AutoBuy] Failed to purchase: " .. targetCharacter.Name)
+        markCharacterPurchased(targetCharacter, false)
+        return false
+    end
+end
+
+function AutoBuySystem:isCurrentTargetEnabled()
+    if not self.currentTargetName then
+        return true
+    end
+    
+    return gameData.characters[self.currentTargetName] and gameData.characters[self.currentTargetName].enabled
+end
+
+function AutoBuySystem:toggle()
+    self.active = not self.active
+    gameData.settings.autoBuyEnabled = self.active
+    
+    if self.active then
+        print("🎆 Auto Buy system STARTED (Enhanced)")
+        self:setupPromptMonitoring()
+        spawn(function()
+            self:mainLoop()
+        end)
+    else
+        print("🛑 Auto Buy system STOPPED")
+        self:cleanupPromptMonitoring()
+        self.currentTarget = nil
+        self.currentTargetName = nil
+        if humanoid then
+            humanoid:MoveTo(humanoidRootPart.Position)
+        end
+    end
+
+    if DataManager and DataManager.save then
+        DataManager:save(gameData)
+    end
+end
+
+-- Setup proximity prompt monitoring to detect who fires prompts
+function AutoBuySystem:setupPromptMonitoring()
+    print("🔍 Setting up proximity prompt monitoring...")
+    
+    -- Monitor all existing characters
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and COMPLETE_DATABASE[obj.Name] then
+            self:monitorCharacterPrompt(obj)
+        end
+    end
+    
+    -- Monitor new characters as they spawn
+    self.workspaceConnection = workspace.ChildAdded:Connect(function(child)
+        if child:IsA("Model") and COMPLETE_DATABASE[child.Name] then
+            task.wait(0.1) -- Small delay to ensure prompt is loaded
+            self:monitorCharacterPrompt(child)
+        end
+    end)
+end
+
+-- Monitor a specific character's proximity prompt
+function AutoBuySystem:monitorCharacterPrompt(character)
+    if not character or not character.Parent then return end
+    
+    local torso = character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart")
+    if not torso then return end
+    
+    local prompt = torso:FindFirstChild("BuyPrompt") or torso:FindFirstChild("BuyPromptOLD")
+    if not prompt or not prompt:IsA("ProximityPrompt") then return end
+    
+    -- Use robust UID generation that never returns nil
+    local uid = character.Name .. "_" .. tostring(tick()) .. "_" .. tostring(math.random(1000, 9999))
+    
+    -- Clean up existing connection if any
+    if self.promptConnections[uid] then
+        self.promptConnections[uid]:Disconnect()
+    end
+    
+    -- Monitor prompt triggered event
+    self.promptConnections[uid] = prompt.Triggered:Connect(function(playerWhoTriggered)
+        self.promptFiredBy[uid] = playerWhoTriggered
+        
+        if playerWhoTriggered == player then
+            print("✅ We fired prompt for: " .. character.Name)
+        else
+            print("🔍 Other player (" .. playerWhoTriggered.Name .. ") fired prompt for: " .. character.Name)
+        end
+        
+        -- Clean up after 30 seconds
+        task.delay(30, function()
+            if self.promptFiredBy[uid] then
+                self.promptFiredBy[uid] = nil
+            end
+        end)
+    end)
+    
+    -- Clean up connection when character is removed
+    character.AncestryChanged:Connect(function()
+        if not character.Parent and self.promptConnections[uid] then
+            self.promptConnections[uid]:Disconnect()
+            self.promptConnections[uid] = nil
+        end
+    end)
+end
+
+-- Cleanup proximity prompt monitoring
+function AutoBuySystem:cleanupPromptMonitoring()
+    print("🧹 Cleaning up proximity prompt monitoring...")
+    
+    -- Disconnect workspace connection
+    if self.workspaceConnection then
+        self.workspaceConnection:Disconnect()
+        self.workspaceConnection = nil
+    end
+    
+    -- Disconnect all prompt connections
+    for uid, connection in pairs(self.promptConnections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    
+    -- Clear tracking data
+    self.promptConnections = {}
+    self.promptFiredBy = {}
+end
+
+function AutoBuySystem:findBestTarget()
+    local bestTarget = nil
+    local bestScore = -math.huge
+    local now = tick()
+    
+    if now - self.lastTargetUpdate < 0.8 then
+        return bestTarget, bestScore
+    end
+    
+    self.lastTargetUpdate = now
+    
+    for _, charName in ipairs(characterNames) do
+        local charData = COMPLETE_DATABASE[charName]
+        local trackData = gameData.characters[charName]
+        
+        if not trackData.enabled then continue end
+        
+        -- Run respawn detection for this character type
+        detectCharacterRespawn(charName)
+        
+        local target = workspace:FindFirstChild(charName)
+        if target and target:IsA("Model") and target:FindFirstChild("HumanoidRootPart") then
+            if isCharacterPurchased(target) then continue end
+            
+            -- Check if character is heading to another player's spawn (purchased by someone else)
+            if self:isCharacterPurchasedByOther(target) then continue end
+            
+            local torso = target:FindFirstChild("Torso") or target:FindFirstChild("HumanoidRootPart")
+            if not torso then continue end
+            
+            local prompt = torso:FindFirstChild("BuyPrompt") or torso:FindFirstChild("BuyPromptOLD")
+            if not prompt or not prompt:IsA("ProximityPrompt") then continue end
+            
+            local distance = (humanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude
+            
+            -- Priority based on income per second
+            local incomeScore = charData.income or 0
+            local distancePenalty = distance * 10
+            local proximityBonus = math.max(0, (50 - distance) * 5)
+            
+            local score = incomeScore + proximityBonus - distancePenalty
+            
+            if score > bestScore then
+                bestScore = score
+                bestTarget = target
+            end
+        end
+    end
+    
+    return bestTarget, bestScore
+end
+
+function AutoBuySystem:followTarget(target)
+    if not target or not target.Parent then return false end
+    if isCharacterPurchased(target) then return false end
+
+    if humanoid and humanoid.WalkSpeed ~= 21 then
+        humanoid.WalkSpeed = 21
+    end
+
+    local startTime = tick()
+    local targetName = target.Name
+    self.currentTargetName = targetName
+
+    print("🎯 Following target: " .. targetName)
+
+    while self.active and target.Parent and (tick() - startTime) < CONFIG.MAX_FOLLOW_TIME do
+        if not self:isCurrentTargetEnabled() then
+            self.currentTarget = nil
+            self.currentTargetName = nil
+            if humanoid then
+                humanoid:MoveTo(humanoidRootPart.Position)
+            end
+            print("❌ Target disabled during follow: " .. targetName)
+            return false
+        end
+
+        if isCharacterPurchased(target) then
+            print("✅ Target already purchased: " .. targetName)
+            return false
+        end
+
+        -- INSTANT REBUY CHECK - Check if someone else bought it
+        if self:isCharacterPurchasedByOther(target) then
+            print("⚡ INSTANT REBUY TRIGGERED for: " .. targetName)
+            print("🔄 " .. targetName .. " was bought by someone else - clearing purchase record")
+            
+            -- Clear this character from purchased list so we can buy it again if it respawns
+            local uid = getCharacterUID(target)
+            if uid and self.purchasedCharacters[uid] then
+                self.purchasedCharacters[uid] = nil
+                print("✅ Cleared purchase record for " .. targetName .. " - can rebuy if respawns")
+            end
+            
+            self.currentTarget = nil
+            self.currentTargetName = nil
+            return "rebuy" -- Signal for immediate rebuy
+        end
+
+        if not target.Parent or not target:FindFirstChild("HumanoidRootPart") then
+            print("❌ Target became invalid: " .. targetName .. " - stopping follow")
+            return false
+        end
+
+        local distance = (humanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude
+
+        if distance <= CONFIG.AUTO_BUY_DISTANCE then
+            if target.Name ~= targetName then
+                print("❌ Target name mismatch during purchase")
+                return false
+            end
+            
+            print("💰 In range, attempting purchase: " .. targetName)
+            local success = attemptPurchase(player, target)
+            if success then
+                task.wait(1) -- Reduced from 3 to 1 second for faster rebuy
+                return true
+            else
+                print("❌ Purchase failed for: " .. targetName)
+                task.wait(0.5) -- Reduced from 2 to 0.5 seconds
+                return false
+            end
+        end
+
+        humanoid:MoveTo(target.HumanoidRootPart.Position)
+        task.wait(0.1) -- Reduced from 0.15 to 0.1 for faster response
+    end
+
+    if tick() - startTime >= CONFIG.MAX_FOLLOW_TIME then
+        print("⏰ Follow timeout for: " .. targetName)
+    end
+
+    self.currentTargetName = nil
+    return false
+end
+
+function AutoBuySystem:mainLoop()
+    print("🔄 Auto Buy main loop started (Enhanced)")
+    
+    while self.active do
+        if not self:isCurrentTargetEnabled() then
+            self.currentTarget = nil
+            self.currentTargetName = nil
+            if humanoid then
+                humanoid:MoveTo(humanoidRootPart.Position)
+            end
+            task.wait(1)
+            continue
+        end
+        
+        local target, score = self:findBestTarget()
+        
+        if target then
+            print("🎯 New best target found: " .. target.Name .. " (score: " .. math.floor(score) .. ")")
+            self.currentTarget = target
+            
+            -- Check if this target is the same as the one we just detected as bought by someone else
+            if self.lastRebuyTarget and self.lastRebuyTarget == target then
+                print("⚠️ Skipping same target that triggered rebuy: " .. target.Name)
+                self.lastRebuyTarget = nil
+                task.wait(0.5)
+                continue
+            end
+            
+            local result = self:followTarget(target)
+            
+            if result == true then
+                print("✅ Successfully purchased: " .. target.Name)
+                self.purchasedCharacters[getCharacterUID(target)] = tick()
+            elseif result == "rebuy" then
+                print("🔄 INSTANT REBUY TRIGGERED - Someone else bought " .. target.Name .. "!")
+                print("🔍 DEBUG: Starting rebuy process...")
+                
+                -- Mark the current target as purchased so we don't target it again
+                local oldUID = getCharacterUID(target)
+                self.purchasedCharacters[oldUID] = tick()
+                
+                self.currentTarget = nil
+                self.currentTargetName = nil
+                
+                print("🔄 Restarting auto-buy loop to find new target...")
+                task.wait(0.1) -- Small delay then continue main loop
+                continue
+            end
+        else
+            self.currentTargetName = nil
+            -- Clean up old tracking data periodically
+            local currentTime = tick()
+            for characterName, instances in pairs(self.characterInstances) do
+                for uid, data in pairs(instances) do
+                    if data.timestamp and (currentTime - data.timestamp) > 300 then
+                        instances[uid] = nil
+                    end
+                end
+            end
+            if humanoid then
+                humanoid:MoveTo(humanoidRootPart.Position)
+            end
+        end
+        
+        task.wait(0.5) -- Quick loop for instant rebuy
+    end
+    
+    print("🛑 Auto Buy main loop stopped")
+end
+
+-- Lock door function
+local function lockDoor()
+    local lockerRoom = getPlayerLockerRoom()
+    if not lockerRoom then return end
+
+    local buttons = lockerRoom:FindFirstChild("Buttons")
+    if not buttons then return end
+
+    local lockButton = buttons:FindFirstChild("DoorLockButton")
+    if not lockButton then return end
+
+    local success = false
+    
+    local buttonPart = lockButton:FindFirstChild("ButtonPressPartOO") or lockButton:FindFirstChild("Part")
+    if buttonPart then
+        local clickDetector = buttonPart:FindFirstChildOfClass("ClickDetector")
+        if clickDetector then
+            pcall(function()
+                fireclickdetector(clickDetector)
+                success = true
+            end)
+            if success then return end
+        end
+        
+        local proximityPrompt = buttonPart:FindFirstChildOfClass("ProximityPrompt")
+        if proximityPrompt then
+            pcall(function()
+                fireproximityprompt(proximityPrompt)
+                success = true
+            end)
+            if success then return end
+        end
+        
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 0)
+                task.wait(0.1)
+                firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 1)
+                success = true
+            end)
+        end
+    end
+    
+    if not success then
+        local directPrompt = lockButton:FindFirstChildOfClass("ProximityPrompt") or lockButton:FindFirstChildOfClass("ClickDetector")
+        if directPrompt then
+            pcall(function()
+                if directPrompt:IsA("ProximityPrompt") then
+                    fireproximityprompt(directPrompt)
+                elseif directPrompt:IsA("ClickDetector") then
+                    fireclickdetector(directPrompt)
+                end
+                success = true
+            end)
+        end
+    end
+end
+
+-- Collect cash function
+local function collectAllCash()
+    local lockerRoom = getPlayerLockerRoom()
+    if not lockerRoom then return end
+
+    local lockers = lockerRoom:FindFirstChild("Lockers")
+    if not lockers then return end
+
+    local collected = 0
+    local attempted = 0
+    
+    for _, locker in pairs(lockers:GetChildren()) do
+        if locker.Name:match("Locker%d+") and locker:FindFirstChild("Button") then
+            attempted = attempted + 1
+            local button = locker.Button
+            local lockerCollected = false
+            
+            for _, part in pairs(button:GetChildren()) do
+                if part:IsA("BasePart") and not lockerCollected then
+                    local clickDetector = part:FindFirstChildOfClass("ClickDetector")
+                    if clickDetector then
+                        pcall(function()
+                            fireclickdetector(clickDetector)
+                            lockerCollected = true
+                            collected = collected + 1
+                        end)
+                        if lockerCollected then break end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                for _, part in pairs(button:GetChildren()) do
+                    if part:IsA("BasePart") and not lockerCollected then
+                        local proximityPrompt = part:FindFirstChildOfClass("ProximityPrompt")
+                        if proximityPrompt then
+                            pcall(function()
+                                fireproximityprompt(proximityPrompt)
+                                lockerCollected = true
+                                collected = collected + 1
+                            end)
+                            if lockerCollected then break end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected then
+                local cashManager = button:FindFirstChild("CashClaimManager") or button:FindFirstChild("CashClaimManager2")
+                if cashManager then
+                    if cashManager:IsA("RemoteEvent") then
+                        pcall(function()
+                            cashManager:FireServer()
+                            lockerCollected = true
+                            collected = collected + 1
+                        end)
+                    elseif cashManager:IsA("LocalScript") or cashManager:IsA("Script") then
+                        for _, child in pairs(cashManager:GetChildren()) do
+                            if child:IsA("RemoteEvent") and not lockerCollected then
+                                pcall(function()
+                                    child:FireServer()
+                                    lockerCollected = true
+                                    collected = collected + 1
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+            
+            if not lockerCollected and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local buttonPart = button:FindFirstChild("Part2") or button:FindFirstChild("Part")
+                if buttonPart then
+                    pcall(function()
+                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 0)
+                        task.wait(0.05)
+                        firetouchinterest(buttonPart, player.Character.HumanoidRootPart, 1)
+                        lockerCollected = true
+                        collected = collected + 1
+                    end)
+                end
+            end
+            
+            if lockerCollected then
+                task.wait(0.02)
+            end
+        end
+    end
+end
+
+-- Auto Lock System
+local AutoLock = {
+    active = false,
+    connection = nil,
+    interval = 1,
+    timer = 0,
+    lastLogTime = 0,
+    successfulLocks = 0
+}
+
+function AutoLock:toggle()
+    self.active = not self.active
+    gameData.settings.autoLockEnabled = self.active
+
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+
+    if self.active then
+        print("Auto Lock system STARTED")
+        lockDoor()
+        self.timer = 0
+        self.lastLogTime = 0
+        self.successfulLocks = 0
+        
+        self.connection = Services.RunService.Heartbeat:Connect(function(dt)
+            self.timer = (self.timer or 0) + dt
+            if self.timer >= self.interval then
+                if self.active then
+                    lockDoor()
+                end
+                self.timer = 0
+            end
+        end)
+    else
+        print("Auto Lock system STOPPED")
+        self.successfulLocks = 0
+    end
+
+    if DataManager and DataManager.save then
+        DataManager:save(gameData)
+    end
+end
+
+function AutoLock:forceStop()
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+    self.active = false
+    gameData.settings.autoLockEnabled = false
+    print("Auto Lock system FORCE STOPPED")
+    self.successfulLocks = 0
+end
+
+-- Auto Collect System
+local AutoCollect = {
+    active = false,
+    connection = nil,
+    interval = 0.5,
+    timer = 0,
+    lastLogTime = 0,
+    totalCollected = 0,
+    collectionsThisSession = 0
+}
+
+function AutoCollect:toggle()
+    self.active = not self.active
+    gameData.settings.autoCollectEnabled = self.active
+
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+
+    if self.active then
+        print("Auto Collect system STARTED")
+        collectAllCash()
+        self.timer = 0
+        self.lastLogTime = 0
+        self.totalCollected = 0
+        self.collectionsThisSession = 0
+        
+        self.connection = Services.RunService.Heartbeat:Connect(function(dt)
+            self.timer = (self.timer or 0) + dt
+            if self.timer >= self.interval then
+                if self.active then
+                    collectAllCash()
+                end
+                self.timer = 0
+            end
+        end)
+    else
+        print("Auto Collect system STOPPED")
+        self.totalCollected = 0
+        self.collectionsThisSession = 0
+    end
+
+    if DataManager and DataManager.save then
+        DataManager:save(gameData)
+    end
+end
+
+function AutoCollect:forceStop()
+    if self.connection then
+        self.connection:Disconnect()
+        self.connection = nil
+    end
+    self.active = false
+    gameData.settings.autoCollectEnabled = false
+    print("Auto Collect system FORCE STOPPED")
+    self.totalCollected = 0
+    self.collectionsThisSession = 0
+end
+
+DataManager = {
+    cache = {},
+    saveQueue = nil,
+    lastSave = 0,
+    saveInProgress = false,
+    currentAccount = nil,
+    accountHash = nil
+}
+
+function DataManager:generateAccountHash()
+    local userId = tostring(player.UserId)
+    local userName = player.Name
+    local displayName = player.DisplayName or userName
+
+    local hashString = userId .. "_" .. userName .. "_" .. displayName
+
+    local hash = ""
+    for i = 1, #hashString do
+        hash = hash .. string.format("%02x", string.byte(hashString, i))
+    end
+
+    self.accountHash = string.sub(hash, 1, 16)
+    self.currentAccount = userName .. "_" .. userId
+
+    print("[DataManager] Account identified as: " .. self.currentAccount)
+    print("[DataManager] Account hash: " .. self.accountHash)
+end
+
+function DataManager:getBasePath()
+    local paths = {
+        function() return getexecutordirectory() .. "/VolleyballVision" end,
+        function() return getscriptsdirectory() .. "/../VolleyballVision" end,
+        function() return "VolleyballVision" end
+    }
+    for _, pathFunc in ipairs(paths) do
+        local success, path = pcall(pathFunc)
+        if success and path then return path end
+    end
+    return "VolleyballVision"
+end
+
+function DataManager:getAccountPath()
+    if not self.accountHash then
+        self:generateAccountHash()
+    end
+
+    local basePath = self:getBasePath()
+    return basePath .. "/accounts/" .. self.accountHash
+end
+
+function DataManager:getDataPath()
+    return self:getAccountPath() .. "/gamedata.json"
+end
+
+function DataManager:createDirectories()
+    local basePath = self:getBasePath()
+    local accountPath = self:getAccountPath()
+
+    local dirs = {
+        basePath,
+        basePath .. "/accounts",
+        accountPath,
+        accountPath .. "/backups",
+        accountPath .. "/exports",
+        basePath .. "/shared"
+    }
+
+    for _, dir in ipairs(dirs) do
+        local success, error = pcall(function()
+            makefolder(dir)
+        end)
+        if not success then
+            warn("[DataManager] Could not create directory: " .. dir .. " - " .. tostring(error))
+        end
+    end
+
+    self:saveAccountInfo()
+end
+
+function DataManager:saveAccountInfo()
+    local accountInfoPath = self:getAccountPath() .. "/account_info.json"
+    local accountInfo = {
+        userId = player.UserId,
+        userName = player.Name,
+        displayName = player.DisplayName or player.Name,
+        accountHash = self.accountHash,
+        createdAt = os.time(),
+        lastAccessed = os.time(),
+        version = "1.0"
+    }
+
+    pcall(function()
+        local jsonData = Services.HttpService:JSONEncode(accountInfo)
+        writefile(accountInfoPath, jsonData)
+    end)
+end
+
+function DataManager:updateLastAccessed()
+    local accountInfoPath = self:getAccountPath() .. "/account_info.json"
+
+    local success, content = pcall(function() return readfile(accountInfoPath) end)
+    if success and content then
+        local parseSuccess, accountInfo = pcall(function()
+            return Services.HttpService:JSONDecode(content)
+        end)
+
+        if parseSuccess and accountInfo then
+            accountInfo.lastAccessed = os.time()
+
+            pcall(function()
+                local jsonData = Services.HttpService:JSONEncode(accountInfo)
+                writefile(accountInfoPath, jsonData)
+            end)
+        end
+    end
+end
+
+function DataManager:getDefaultData()
+    local data = {
+        account = {
+            userId = player.UserId,
+            userName = player.Name,
+            displayName = player.DisplayName or player.Name,
+            accountHash = self.accountHash,
+            dataVersion = "1.0"
+        },
+        characters = {},
+        settings = {
+            soundEnabled = true,
+            performanceMode = false,
+            autoBuyEnabled = false,
+            autoLockEnabled = false,
+            autoCollectEnabled = false
+        },
+        analytics = {
+            totalSpawns = 0,
+            sessionStart = os.time(),
+            bestSession = {spawns = 0, duration = 0},
+            rarityStats = {},
+            totalPlayTime = 0
+        },
+        filters = {
+            searchText = "",
+            exactMatch = false,
+            selectedRarity = nil,
+            selectedMutation = nil,
+            enabledOnly = false
+        }
+    }
+
+    for _, name in ipairs(characterNames) do
+        local isDefaultEnabled = false
+        for _, defaultName in ipairs(DEFAULT_ENABLED_CHARACTERS) do
+            if name == defaultName then
+                isDefaultEnabled = true
+                break
+            end
+        end
+        data.characters[name] = {
+            enabled = isDefaultEnabled,
+            totalSeen = 0,
+            currentCount = 0,
+            status = "never",
+            lastSeen = 0,
+            sessionSpawns = 0,
+            totalTime = 0
+        }
+    end
+
+    return data
+end
+
+function DataManager:load()
+    self:generateAccountHash()
+    self:createDirectories()
+    self:updateLastAccessed()
+
+    local dataPath = self:getDataPath()
+    local success, content = pcall(function() return readfile(dataPath) end)
+
+    if success and content then
+        local parseSuccess, data = pcall(function()
+            return Services.HttpService:JSONDecode(content)
+        end)
+
+        if parseSuccess and data then
+            if data.account and data.account.userId == player.UserId then
+                local defaultData = self:getDefaultData()
+
+                for key, value in pairs(defaultData) do
+                    if data[key] == nil then
+                        data[key] = value
+                    end
+                end
+
+                for name, charData in pairs(defaultData.characters) do
+                    if data.characters[name] == nil then
+                        data.characters[name] = charData
+                    end
+                end
+
+                print("[DataManager] Loaded existing data for account: " .. self.currentAccount)
+                return data
+            else
+                warn("[DataManager] Account mismatch in saved data - creating new profile")
+            end
+        else
+            warn("[DataManager] Failed to parse saved data - creating new profile")
+        end
+    else
+        print("[DataManager] No existing data found for account: " .. self.currentAccount)
+    end
+
+    print("[DataManager] Creating new data profile for account: " .. self.currentAccount)
+    return self:getDefaultData()
+end
+
+function DataManager:countEnabledCharacters(data)
+    local count = 0
+    for _, charData in pairs(data.characters) do
+        if charData.enabled then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+function DataManager:save(data, force)
+    if self.saveInProgress then
+        self.saveQueue = data
+        return
+    end
+
+    local now = tick()
+    if not force and (now - self.lastSave) < CONFIG.SAVE_INTERVAL then
+        self.saveQueue = data
+        return
+    end
+
+    self.saveInProgress = true
+    self.lastSave = now
+
+    spawn(function()
+        local dataPath = self:getDataPath()
+        local success = pcall(function()
+            data.account = data.account or {}
+            data.account.userId = player.UserId
+            data.account.userName = player.Name
+            data.account.displayName = player.DisplayName or player.Name
+            data.account.accountHash = self.accountHash
+            data.account.lastSaved = os.time()
+            data.account.dataVersion = "1.0"
+
+            local jsonData = Services.HttpService:JSONEncode(data)
+            writefile(dataPath, jsonData)
+
+            if math.random(1, 20) == 1 then
+                local backupPath = self:getAccountPath() .. "/backups/backup_" .. os.time() .. ".json"
+                pcall(function() writefile(backupPath, jsonData) end)
+            end
+        end)
+
+        if success then
+            self:updateLastAccessed()
+        else
+            warn("[DataManager] Failed to save data for account: " .. self.currentAccount)
+        end
+
+        self.saveInProgress = false
+
+        if self.saveQueue then
+            local queuedData = self.saveQueue
+            self.saveQueue = nil
+            self:save(queuedData, true)
+        end
+    end)
+end
+
+function DataManager:getAllAccounts()
+    local basePath = self:getBasePath()
+    local accountsPath = basePath .. "/accounts"
+    local accounts = {}
+
+    pcall(function()
+        local folders = listfiles(accountsPath)
+        for _, folderPath in ipairs(folders) do
+            local accountInfoPath = folderPath .. "/account_info.json"
+            local success, content = pcall(function() return readfile(accountInfoPath) end)
+
+            if success and content then
+                local parseSuccess, accountInfo = pcall(function()
+                    return Services.HttpService:JSONDecode(content)
+                end)
+
+                if parseSuccess and accountInfo then
+                    table.insert(accounts, accountInfo)
+                end
+            end
+        end
+    end)
+
+    return accounts
+end
+
+function DataManager:migrateOldData()
+    local oldPath = self:getBasePath() .. "/gamedata.json"
+    local newPath = self:getDataPath()
+
+    local success, content = pcall(function() return readfile(oldPath) end)
+    if success and content then
+        local parseSuccess, data = pcall(function()
+            return Services.HttpService:JSONDecode(content)
+        end)
+
+        if parseSuccess and data then
+            pcall(function()
+                local jsonData = Services.HttpService:JSONEncode(data)
+                writefile(newPath, jsonData)
+            end)
+            print("[DataManager] Migrated old data to new account-based structure")
+        end
+    end
+end
+
+function DataManager:clear()
+    local default = self:getDefaultData()
+    local dataPath = self:getDataPath()
+
+    pcall(function()
+        local json = Services.HttpService:JSONEncode(default)
+        writefile(dataPath, json)
+    end)
+
+    gameData = default
+    self:save(gameData, true)
+
+    print("[DataManager] Cleared and reset data for account: " .. (self.currentAccount or "unknown"))
+end
+
+local SoundManager = {
+    enabled = true,
+    sounds = {}
+}
+
+function SoundManager:play(soundId, volume, pitch)
+    if not self.enabled then return end
+    
+    spawn(function()
+        pcall(function()
+            local sound = Instance.new("Sound")
+            sound.SoundId = soundId
+            sound.Volume = volume or CONFIG.SOUND_VOLUME
+            sound.PlaybackSpeed = pitch or 1.0
+            sound.Parent = Services.SoundService
+            
+            local loadStart = tick()
+            while not sound.IsLoaded and (tick() - loadStart) < 2 do
+                task.wait(0.1)
+            end
+            
+            if sound.IsLoaded then
+                sound:Play()
+            end
+            
+            sound.Ended:Connect(function()
+                sound:Destroy()
+            end)
+            
+            spawn(function()
+                task.wait(15)
+                if sound and sound.Parent then
+                    sound:Destroy()
+                end
+            end)
+        end)
+    end)
+end
+
+function SoundManager:playSpawnAlert(rarity, mutation)
+    local basePitch = {
+        Secret = 1.4,
+        Awakened = 1.3,
+        Mythic = 1.2,
+        Legendary = 1.1,
+        Rare = 1.0,
+        Uncommon = 0.9,
+        Common = 0.8
+    }
+    
+    local mutationBonus = 0
+    if mutation == "Golden" then
+        mutationBonus = 0.1
+    elseif mutation == "Diamond" then
+        mutationBonus = 0.2
+    end
+    
+    local pitch = (basePitch[rarity] or 1.0) + mutationBonus
+    local volume = CONFIG.SOUND_VOLUME * (mutation == "Diamond" and 1.2 or mutation == "Golden" and 1.1 or 1.0)
+    
+    self:play(CONFIG.ALARM_SOUND_ID, volume, pitch)
+end
+
+local PerformanceMonitor = {
+    totalFrameTime = 0,
+    frameCount = 0
+}
+
+function PerformanceMonitor:update(deltaTime)
+    if not deltaTime then return end
+    
+    self.totalFrameTime = self.totalFrameTime + deltaTime
+    self.frameCount = self.frameCount + 1
+    
+    if self.totalFrameTime >= 1.0 then
+        GameState.averageFPS = self.frameCount / self.totalFrameTime
+        self.totalFrameTime = 0
+        self.frameCount = 0
+        
+        if GameState.averageFPS < 30 and CONFIG.UPDATE_INTERVAL < 0.5 then
+            CONFIG.UPDATE_INTERVAL = 0.5
+        elseif GameState.averageFPS > 55 and CONFIG.UPDATE_INTERVAL > 0.2 then
+            CONFIG.UPDATE_INTERVAL = 0.2
+        end
+    end
+end
+
+-- UIManager with Minimize Feature
+local UIManager = {
+    elements = {},
+    animations = {},
+    searchFilters = nil
+}
+
+-- Fixed minimizeToSquare function with proper text timing and working drag
+function UIManager:minimizeToSquare()
+    if GameState.isMinimized then return end
+    GameState.isMinimized = true
+    
+    local mainFrame = self.elements.mainFrame
+    if not mainFrame then return end
+    
+    -- Hide all UI elements immediately
+    for _, child in pairs(mainFrame:GetChildren()) do
+        if child:IsA("GuiObject") and child.Name ~= "MinimizedSquare" then
+            child.Visible = false
+        end
+    end
+    
+    -- Create the target square (invisible initially)
+    local square = Instance.new("Frame")
+    square.Name = "MinimizedSquare"
+    square.Size = UDim2.new(0, 0, 0, 0)
+    square.Position = UDim2.new(0.5, 0, 0.5, 0)
+    square.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+    square.BorderSizePixel = 0
+    square.ZIndex = 1000
+    square.BackgroundTransparency = 1
+    square.Parent = mainFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = square
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 80)
+    stroke.Thickness = 2
+    stroke.Transparency = 1
+    stroke.Parent = square
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 18))
+    })
+    gradient.Rotation = 135
+    gradient.Parent = square
+    
+    -- Text that starts completely hidden
+    local restoreText = Instance.new("TextLabel")
+    restoreText.Size = UDim2.new(1, -10, 1, -10)
+    restoreText.Position = UDim2.new(0, 5, 0, 5)
+    restoreText.BackgroundTransparency = 1
+    restoreText.Text = "Show\nUI"
+    restoreText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    restoreText.Font = Enum.Font.GothamBold
+    restoreText.TextSize = 14
+    restoreText.TextWrapped = true
+    restoreText.ZIndex = 1001
+    restoreText.TextTransparency = 1
+    restoreText.Visible = false -- Start with text completely hidden
+    restoreText.Parent = square
+    
+    -- Black hole shrinking effect for main frame
+    local shrinkTween = Services.TweenService:Create(mainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 1
+    })
+    
+    shrinkTween:Play()
+    
+    -- After shrink completes, expand square
+    shrinkTween.Completed:Connect(function()
+        local expandTween = Services.TweenService:Create(square, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 80, 0, 80),
+            Position = UDim2.new(0.5, -40, 0.5, -40),
+            BackgroundTransparency = 0
+        })
+        
+        local strokeTween = Services.TweenService:Create(stroke, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Transparency = 0.3
+        })
+        
+        expandTween:Play()
+        strokeTween:Play()
+        
+        -- Only show and fade in text after square is completely expanded
+        expandTween.Completed:Connect(function()
+            restoreText.Visible = true
+            local textTween = Services.TweenService:Create(restoreText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TextTransparency = 0
+            })
+            textTween:Play()
+        end)
+    end)
+    
+    self.elements.minimizedSquare = square
+    
+    -- Setup drag and click functionality
+    self:makeSquareDraggable(square)
+    
+    -- Hover effects
+    square.MouseEnter:Connect(function()
+        if not GameState.squareDragging then
+            Services.TweenService:Create(square, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 85, 0, 85),
+                Position = UDim2.new(square.Position.X.Scale, square.Position.X.Offset - 2.5, square.Position.Y.Scale, square.Position.Y.Offset - 2.5)
+            }):Play()
+        end
+    end)
+    
+    square.MouseLeave:Connect(function()
+        if not GameState.squareDragging then
+            Services.TweenService:Create(square, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 80, 0, 80),
+                Position = UDim2.new(square.Position.X.Scale, square.Position.X.Offset + 2.5, square.Position.Y.Scale, square.Position.Y.Offset + 2.5)
+            }):Play()
+        end
+    end)
+end
+
+function UIManager:unminimizeFromSquare()
+    if not GameState.isMinimized then return end
+    GameState.isMinimized = false
+    
+    local mainFrame = self.elements.mainFrame
+    local square = self.elements.minimizedSquare
+    if not mainFrame or not square then return end
+    
+    -- Hide text immediately and make square completely invisible
+    local restoreText = square:FindFirstChild("TextLabel")
+    if restoreText then
+        restoreText.Visible = false
+    end
+    
+    -- Hide square's stroke during animation
+    local stroke = square:FindFirstChildOfClass("UIStroke")
+    if stroke then
+        stroke.Transparency = 1
+    end
+    
+    -- Animate the square shrinking with complete transparency
+    local shrinkTween = Services.TweenService:Create(square, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 1
+    })
+    shrinkTween:Play()
+    
+    -- Wait for square to shrink, then restore main frame
+    shrinkTween.Completed:Connect(function()
+        -- Reset main frame to ensure clean state
+        mainFrame.BackgroundTransparency = 0
+        local mainStroke = mainFrame:FindFirstChildOfClass("UIStroke")
+        if mainStroke then
+            mainStroke.Transparency = 0.3
+        end
+        
+        local restoreTween = Services.TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 900, 0, 600),
+            Position = UDim2.new(0.5, -450, 0.5, -300)
+        })
+        restoreTween:Play()
+        
+        -- Show UI elements after restore completes
+        restoreTween.Completed:Connect(function()
+            for _, child in pairs(mainFrame:GetChildren()) do
+                if child.Name ~= "MinimizedSquare" and child:IsA("GuiObject") and child.Name ~= "SettingsPanel" then
+                    child.Visible = true
+                end
+            end
+            
+            square:Destroy()
+            self.elements.minimizedSquare = nil
+            GameState.squareDragging = false
+        end)
+    end)
+    
+    print("UI restored from minimized state")
+end
+
+function UIManager:makeSquareDraggable(square)
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    local hasMoved = false
+    
+    GameState.squareDragging = false
+    
+    square.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            hasMoved = false
+            GameState.squareDragging = false
+            
+            -- Store the input position and current square position
+            dragStart = input.Position
+            startPos = square.Position
+        end
+    end)
+    
+    -- Global mouse movement tracking
+    local dragConnection = Services.UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            
+            -- If moved more than 3 pixels, it's a drag
+            if not hasMoved and (math.abs(delta.X) > 3 or math.abs(delta.Y) > 3) then
+                hasMoved = true
+                GameState.squareDragging = true
+            end
+            
+            if hasMoved then
+                -- Get screen size
+                local screenSize = workspace.CurrentCamera.ViewportSize
+                
+                -- Calculate new position using the original starting position plus delta
+                local newX = startPos.X.Offset + delta.X
+                local newY = startPos.Y.Offset + delta.Y
+                
+                -- Keep within screen bounds with proper margins (accounting for square size)
+                local squareSize = 80 -- The square is 80x80 pixels
+                local margin = 10 -- Small margin from screen edges
+                
+                -- Allow full screen movement
+                newX = math.max(margin, math.min(screenSize.X - squareSize - margin, newX))
+                newY = math.max(margin, math.min(screenSize.Y - squareSize - margin, newY))
+                
+                -- Update position using offset coordinates
+                square.Position = UDim2.new(0, newX, 0, newY)
+            end
+        end
+    end)
+    
+    -- Global mouse release tracking
+    local releaseConnection = Services.UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if dragging then
+                dragging = false
+                
+                -- Only trigger unminimize if it wasn't a drag
+                if not hasMoved then
+                    GameState.squareDragging = false
+                    self:unminimizeFromSquare()
+                else
+                    -- Small delay before allowing hover effects again
+                    spawn(function()
+                        task.wait(0.1)
+                        GameState.squareDragging = false
+                    end)
+                end
+            end
+        end
+    end)
+    
+    -- Clean up connections when square is destroyed
+    square.AncestryChanged:Connect(function()
+        if not square.Parent then
+            if dragConnection then dragConnection:Disconnect() end
+            if releaseConnection then releaseConnection:Disconnect() end
+        end
+    end)
+end
+
+function UIManager:create()
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+
+    self.elements = self.elements or {}
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "VolleyballVision"
+    screenGui.Parent = playerGui
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 100
+    screenGui.Enabled = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainContainer"
+    mainFrame.Size = UDim2.new(0, 900, 0, 600)
+    mainFrame.Position = UDim2.new(0.5, -450, 0.5, -300)
+    mainFrame.BackgroundTransparency = 0
+    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = false
+    mainFrame.ZIndex = 1
+    mainFrame.Parent = screenGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = mainFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 80)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = mainFrame
+
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 18))
+    })
+    gradient.Rotation = 135
+    gradient.Parent = mainFrame
+
+    self.elements.screenGui = screenGui
+    self.elements.mainFrame = mainFrame
+
+    if self.createHeader then self:createHeader() end
+    if self.createSidebar then self:createSidebar() end
+    if self.createMainPanel then self:createMainPanel() end
+    if self.createFooter then self:createFooter() end
+    if self.createSettingsPanel then
+        self:createSettingsPanel()
+    end
+    if self.makeDraggable then self:makeDraggable() end
+
+    return screenGui
+end
+
+function UIManager:createHeader()
+    local header = Instance.new("Frame")
+    header.Name = "Header"
+    header.Size = UDim2.new(1, 0, 0, 60)
+    header.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+    header.BorderSizePixel = 0
+    header.Parent = self.elements.mainFrame
+
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 16)
+    headerCorner.Parent = header
+
+    local titleContainer = Instance.new("Frame")
+    titleContainer.Size = UDim2.new(0.6, 0, 1, 0)
+    titleContainer.Position = UDim2.new(0, 20, 0, 0)
+    titleContainer.BackgroundTransparency = 1
+    titleContainer.Parent = header
+
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 5)
+    title.BackgroundTransparency = 1
+    title.Text = SCRIPT_NAME
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 20
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = titleContainer
+
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, 0, 0, 15)
+    subtitle.Position = UDim2.new(0, 0, 0, 35)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = SCRIPT_VERSION
+    subtitle.TextColor3 = Color3.fromRGB(150, 150, 200)
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextSize = 11
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.Parent = titleContainer
+
+    -- Fixed minimize button with no aura
+    local minimizeButton = Instance.new("TextButton")
+    minimizeButton.Name = "MinimizeButton"
+    minimizeButton.Size = UDim2.new(0, 32, 0, 32)
+    minimizeButton.Position = UDim2.new(1, -40, 0.5, -16)
+    minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    minimizeButton.Text = "−"
+    minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.TextSize = 20
+    minimizeButton.BorderSizePixel = 0
+    minimizeButton.AutoButtonColor = false  -- This prevents the default aura
+    minimizeButton.Parent = header
+
+    local minCorner = Instance.new("UICorner")
+    minCorner.CornerRadius = UDim.new(0, 6)
+    minCorner.Parent = minimizeButton
+
+    -- Settings button (gear icon)
+    local settingsButton = Instance.new("ImageButton")
+    settingsButton.Name = "SettingsButton"
+    settingsButton.Size = UDim2.new(0, 32, 0, 32)
+    settingsButton.Position = UDim2.new(1, -80, 0.5, -16)
+    settingsButton.BackgroundTransparency = 1
+    settingsButton.Image = "rbxassetid://6031280882"
+    settingsButton.Parent = header
+
+    self.elements.header = header
+    self.elements.title = title
+    self.elements.settingsButton = settingsButton
+    self.elements.minimizeButton = minimizeButton
+
+    -- Connect minimize button only
+    minimizeButton.MouseButton1Click:Connect(function()
+        self:minimizeToSquare()
+    end)
+
+    -- Connect settings button
+    settingsButton.MouseButton1Click:Connect(function()
+        self:toggleSettingsPanel()
+    end)
+
+    -- Manual hover effects to replace AutoButtonColor
+    minimizeButton.MouseEnter:Connect(function()
+        minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    end)
+
+    minimizeButton.MouseLeave:Connect(function()
+        minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    end)
+end
+
+function UIManager:toggleSettingsPanel()
+    if not self.elements.settingsPanel then return end
+    local p = self.elements.settingsPanel
+    p.Visible = not p.Visible
+end
+
+-- Updated createSettingsPanel function - starts hidden
+function UIManager:createSettingsPanel()
+    print("Building settings panel...")
+
+    gameData.settings = gameData.settings or {}
+    gameData.settings.autoBuyEnabled = gameData.settings.autoBuyEnabled or false
+    gameData.settings.autoLockEnabled = gameData.settings.autoLockEnabled or false
+    gameData.settings.autoCollectEnabled = gameData.settings.autoCollectEnabled or false
+
+    local panel = Instance.new("Frame")
+    panel.Name = "SettingsPanel"
+    panel.Size = UDim2.new(0, 200, 0, 180)  -- Reduced from 220x240 to 200x180
+    panel.Position = UDim2.new(1, -210, 0, 65)  -- Adjusted position
+    panel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    panel.Visible = false
+    panel.ZIndex = 50
+    panel.Parent = self.elements.mainFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 80)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.2
+    stroke.Parent = panel
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = panel
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6)  -- Reduced from 8
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = panel
+
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 8)     -- Reduced from 10
+    padding.PaddingLeft = UDim.new(0, 8)    -- Reduced from 10
+    padding.PaddingRight = UDim.new(0, 8)   -- Reduced from 10
+    padding.PaddingBottom = UDim.new(0, 8)  -- Added bottom padding
+    padding.Parent = panel
+
+    local function makeSwitch(labelText, settingKey, callback, order)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 0, 30)
+        container.LayoutOrder = order
+        container.BackgroundTransparency = 1
+        container.ZIndex = 51
+        container.Parent = panel
+
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(0.7, 0, 1, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = labelText
+        lbl.Font = Enum.Font.Gotham
+        lbl.TextSize = 14
+        lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.ZIndex = 52
+        lbl.Parent = container
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.3, -4, 1, 0)
+        btn.Position = UDim2.new(0.7, 4, 0, 0)
+        btn.AutoButtonColor = false
+        btn.BackgroundColor3 = gameData.settings[settingKey] and Color3.fromRGB(50, 205, 50) or Color3.fromRGB(100, 100, 100)
+        btn.Text = gameData.settings[settingKey] and "ON" or "OFF"
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.ZIndex = 53
+        btn.Parent = container
+
+        btn.MouseButton1Click:Connect(function()
+            gameData.settings[settingKey] = not gameData.settings[settingKey]
+            btn.BackgroundColor3 = gameData.settings[settingKey] and Color3.fromRGB(50, 205, 50) or Color3.fromRGB(100, 100, 100)
+            btn.Text = gameData.settings[settingKey] and "ON" or "OFF"
+            if callback then callback(gameData.settings[settingKey]) end
+            if DataManager and DataManager.save then
+                DataManager:save(gameData)
+            end
+        end)
+    end
+
+    -- Server Teleport section (above auto-buy as requested)
+    local teleportContainer = Instance.new("Frame")
+    teleportContainer.Size = UDim2.new(1, 0, 0, 60)
+    teleportContainer.LayoutOrder = 0
+    teleportContainer.BackgroundTransparency = 1
+    teleportContainer.ZIndex = 51
+    teleportContainer.Parent = panel
+
+    local teleportLabel = Instance.new("TextLabel")
+    teleportLabel.Size = UDim2.new(1, 0, 0, 20)
+    teleportLabel.BackgroundTransparency = 1
+    teleportLabel.Text = "Server Teleport"
+    teleportLabel.Font = Enum.Font.GothamBold
+    teleportLabel.TextSize = 14
+    teleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportLabel.TextXAlignment = Enum.TextXAlignment.Left
+    teleportLabel.ZIndex = 52
+    teleportLabel.Parent = teleportContainer
+
+    local serverInput = Instance.new("TextBox")
+    serverInput.Size = UDim2.new(0.65, 0, 0, 25)
+    serverInput.Position = UDim2.new(0, 0, 0, 25)
+    serverInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    serverInput.BorderSizePixel = 0
+    serverInput.Text = ""
+    serverInput.PlaceholderText = "Server ID"
+    serverInput.Font = Enum.Font.Gotham
+    serverInput.TextSize = 12
+    serverInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    serverInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    serverInput.ZIndex = 52
+    serverInput.Parent = teleportContainer
+
+    local teleportBtn = Instance.new("TextButton")
+    teleportBtn.Size = UDim2.new(0.3, -5, 0, 25)
+    teleportBtn.Position = UDim2.new(0.7, 5, 0, 25)
+    teleportBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    teleportBtn.BorderSizePixel = 0
+    teleportBtn.Text = "Teleport"
+    teleportBtn.Font = Enum.Font.GothamBold
+    teleportBtn.TextSize = 11
+    teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportBtn.ZIndex = 52
+    teleportBtn.Parent = teleportContainer
+
+    teleportBtn.MouseButton1Click:Connect(function()
+        local serverId = serverInput.Text:gsub("%s+", "")
+        if serverId and serverId ~= "" then
+            ServerTeleporter:teleportToServer(serverId)
+        end
+    end)
+
+    makeSwitch("Auto Buy", "autoBuyEnabled", function()
+        AutoBuySystem:toggle()
+    end, 1)
+
+    makeSwitch("Auto Lock Base", "autoLockEnabled", function()
+        AutoLock:toggle()
+    end, 2)
+
+    makeSwitch("Auto Collect Money", "autoCollectEnabled", function()
+        AutoCollect:toggle()
+    end, 3)
+
+    -- Clear Data button
+    local clearBtn = Instance.new("TextButton")
+    clearBtn.Size = UDim2.new(1, 0, 0, 30)
+    clearBtn.LayoutOrder = 4
+    clearBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    clearBtn.TextColor3 = Color3.new(1, 1, 1)
+    clearBtn.Text = "Clear Data"
+    clearBtn.Font = Enum.Font.GothamBold
+    clearBtn.TextSize = 12
+    clearBtn.ZIndex = 53
+    clearBtn.Parent = panel
+
+    clearBtn.MouseButton1Click:Connect(function()
+        if DataManager and DataManager.clear then
+            DataManager:clear()
+        end
+        UIManager:updateCharacterList()
+        UIManager:updateTrackingCount()
+    end)
+
+    self.elements.settingsPanel = panel
+end
+
+function UIManager:createSidebar()
+    local sidebar = Instance.new("Frame")
+    sidebar.Name = "Sidebar"
+    sidebar.Size = UDim2.new(0, 320, 1, -110)
+    sidebar.Position = UDim2.new(0, 15, 0, 70)
+    sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    sidebar.BorderSizePixel = 0
+    sidebar.Parent = self.elements.mainFrame
+    
+    local sidebarCorner = Instance.new("UICorner")
+    sidebarCorner.CornerRadius = UDim.new(0, 12)
+    sidebarCorner.Parent = sidebar
+    
+    local sidebarStroke = Instance.new("UIStroke")
+    sidebarStroke.Color = Color3.fromRGB(60, 60, 80)
+    sidebarStroke.Thickness = 1
+    sidebarStroke.Transparency = 0.6
+    sidebarStroke.Parent = sidebar
+    
+    self:createSearchSection(sidebar)
+    self:createCharacterList(sidebar)
+    
+    self.elements.sidebar = sidebar
+end
+
+function UIManager:createSearchSection(parent)
+    local searchContainer = Instance.new("Frame")
+    searchContainer.Size = UDim2.new(1, -20, 0, 120)
+    searchContainer.Position = UDim2.new(0, 10, 0, 10)
+    searchContainer.BackgroundTransparency = 1
+    searchContainer.Parent = parent
+    
+    local searchBox = Instance.new("TextBox")
+    searchBox.Name = "SearchBox"
+    searchBox.Size = UDim2.new(1, 0, 0, 35)
+    searchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    searchBox.PlaceholderText = "Search characters..."
+    searchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+    searchBox.Text = gameData.filters.searchText
+    searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBox.Font = Enum.Font.Gotham
+    searchBox.TextSize = 14
+    searchBox.BorderSizePixel = 0
+    searchBox.Parent = searchContainer
+    
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 8)
+    searchCorner.Parent = searchBox
+    
+    local exactToggle = self:createToggleButton("Exact Match", UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 45), function(isToggled)
+        gameData.filters.exactMatch = isToggled
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end, gameData.filters.exactMatch)
+    exactToggle.Parent = searchContainer
+    
+    local enabledToggle = self:createToggleButton("Enabled Only", UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 45), function(isToggled)
+        gameData.filters.enabledOnly = isToggled
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end, gameData.filters.enabledOnly)
+    enabledToggle.Parent = searchContainer
+    
+    local rarityFilter = self:createFilterDropdown("Rarity", {"All", "Secret", "Awakened", "Mythic", "Legendary", "Rare", "Uncommon", "Common"}, 
+        UDim2.new(0.48, 0, 0, 25), UDim2.new(0, 0, 0, 80), function(selected)
+        gameData.filters.selectedRarity = selected == "All" and nil or selected
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end, gameData.filters.selectedRarity or "All")
+    rarityFilter.Parent = searchContainer
+    
+    local mutationFilter = self:createFilterDropdown("Mutation", {"All", "Base", "Golden", "Diamond"}, 
+        UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 80), function(selected)
+        gameData.filters.selectedMutation = selected == "All" and nil or selected
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end, gameData.filters.selectedMutation or "All")
+    mutationFilter.Parent = searchContainer
+    
+    self.elements.searchBox = searchBox
+    self.elements.exactToggle = exactToggle
+    self.elements.enabledToggle = enabledToggle
+    self.elements.rarityFilter = rarityFilter
+    self.elements.mutationFilter = mutationFilter
+    
+    self:connectSearchEvents()
+end
+
+function UIManager:createToggleButton(text, size, position, callback, initialState)
+    local btn = Instance.new("TextButton")
+    btn.Size = size
+    btn.Position = position
+    btn.BackgroundColor3 = initialState and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(40, 40, 50)
+    btn.Text = text
+    btn.TextColor3 = initialState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 10
+    btn.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        local isToggled = btn.BackgroundColor3 == Color3.fromRGB(40, 40, 50)
+        btn.BackgroundColor3 = isToggled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(40, 40, 50)
+        btn.TextColor3 = isToggled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+        callback(isToggled)
+    end)
+    
+    return btn
+end
+
+function UIManager:createFilterDropdown(label, options, size, position, callback, initialState)
+    local container = Instance.new("Frame")
+    container.Size = size
+    container.Position = position
+    container.BackgroundTransparency = 1
+    
+    local dropdown = Instance.new("TextButton")
+    dropdown.Size = UDim2.new(1, 0, 1, 0)
+    dropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    local initialText = initialState or "All"
+    dropdown.Text = label .. ": " .. initialText
+    dropdown.TextColor3 = Color3.fromRGB(200, 200, 200)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 10
+    dropdown.BorderSizePixel = 0
+    dropdown.Parent = container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = dropdown
+    
+    local currentIndex = 1
+    for i, option in ipairs(options) do
+        if option == initialText then
+            currentIndex = i
+            break
+        end
+    end
+    
+    dropdown.MouseButton1Click:Connect(function()
+        currentIndex = currentIndex % #options + 1
+        local selected = options[currentIndex]
+        dropdown.Text = label .. ": " .. selected
+        callback(selected)
+    end)
+    
+    return container
+end
+
+function UIManager:connectSearchEvents()
+    self.elements.searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        gameData.filters.searchText = self.elements.searchBox.Text:lower()
+        self:updateCharacterList()
+        DataManager:save(gameData)
+    end)
+end
+
+function UIManager:createCharacterList(parent)
+    local listContainer = Instance.new("Frame")
+    listContainer.Size = UDim2.new(1, -20, 1, -140)
+    listContainer.Position = UDim2.new(0, 10, 0, 130)
+    listContainer.BackgroundTransparency = 1
+    listContainer.Parent = parent
+    
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 25)
+    header.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    header.BorderSizePixel = 0
+    header.Parent = listContainer
+    
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 6)
+    headerCorner.Parent = header
+    
+    local headerText = Instance.new("TextLabel")
+    headerText.Name = "CharacterCountLabel"
+    headerText.Size = UDim2.new(1, -10, 1, 0)
+    headerText.Position = UDim2.new(0, 10, 0, 0)
+    headerText.BackgroundTransparency = 1
+    headerText.Text = "Characters (0)"
+    headerText.TextColor3 = Color3.fromRGB(200, 200, 255)
+    headerText.Font = Enum.Font.GothamBold
+    headerText.TextSize = 12
+    headerText.TextXAlignment = Enum.TextXAlignment.Left
+    headerText.Parent = header
+        
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "CharacterScroll"
+    scrollFrame.Size = UDim2.new(1, 0, 1, -30)
+    scrollFrame.Position = UDim2.new(0, 0, 0, 30)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.BorderSizePixel = 0
+    scrollFrame.ScrollBarThickness = 6
+    scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollFrame.Parent = listContainer
+    
+    self.elements.characterScroll = scrollFrame
+    self.elements.characterItems = {}
+    self.elements.characterCountLabel = headerText
+    
+    self:populateCharacterList()
+end
+
+function UIManager:populateCharacterList()
+    local scrollFrame = self.elements.characterScroll
+    
+    for i, charName in ipairs(characterNames) do
+        local charData = COMPLETE_DATABASE[charName]
+        
+        local itemFrame = Instance.new("Frame")
+        itemFrame.Name = charName:gsub("%s+", "_")
+        itemFrame.Size = UDim2.new(1, -10, 0, 32)
+        itemFrame.Position = UDim2.new(0, 5, 0, (i-1) * 34)
+        itemFrame.BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(32, 32, 42) or Color3.fromRGB(28, 28, 38)
+        itemFrame.BorderSizePixel = 0
+        itemFrame.Parent = scrollFrame
+        
+        local itemCorner = Instance.new("UICorner")
+        itemCorner.CornerRadius = UDim.new(0, 6)
+        itemCorner.Parent = itemFrame
+        
+        local rarityStripe = Instance.new("Frame")
+        rarityStripe.Size = UDim2.new(0, 4, 1, 0)
+        rarityStripe.BackgroundColor3 = RARITY_COLORS[charData.rarity]
+        rarityStripe.BorderSizePixel = 0
+        rarityStripe.Parent = itemFrame
+        
+        local stripeCorner = Instance.new("UICorner")
+        stripeCorner.CornerRadius = UDim.new(0, 2)
+        stripeCorner.Parent = rarityStripe
+        
+        local checkbox = Instance.new("TextButton")
+        checkbox.Size = UDim2.new(0, 20, 0, 20)
+        checkbox.Position = UDim2.new(0, 10, 0.5, -10)
+        checkbox.BackgroundColor3 = Color3.fromRGB(50, 205, 50)
+        checkbox.Text = "✓"
+        checkbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+        checkbox.Font = Enum.Font.GothamBold
+        checkbox.TextSize = 12
+        checkbox.BorderSizePixel = 0
+        checkbox.Parent = itemFrame
+        
+        local checkCorner = Instance.new("UICorner")
+        checkCorner.CornerRadius = UDim.new(0, 4)
+        checkCorner.Parent = checkbox
+        
+        local nameContainer = Instance.new("Frame")
+        nameContainer.Size = UDim2.new(1, -80, 1, 0)
+        nameContainer.Position = UDim2.new(0, 35, 0, 0)
+        nameContainer.BackgroundTransparency = 1
+        nameContainer.Parent = itemFrame
+        
+        local displayName = charName
+        if charData.mutation then
+            displayName = charData.mutation:sub(1,1) .. ". " .. charName:gsub("^" .. charData.mutation .. " ", "")
+        end
+        
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, -25, 0.6, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = displayName
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 11
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        nameLabel.Parent = nameContainer
+        
+        local infoLabel = Instance.new("TextLabel")
+        infoLabel.Size = UDim2.new(1, -25, 0.4, 0)
+        infoLabel.Position = UDim2.new(0, 0, 0.6, 0)
+        infoLabel.BackgroundTransparency = 1
+        infoLabel.Text = charData.rarity .. " • Tier " .. charData.tier
+        infoLabel.TextColor3 = RARITY_COLORS[charData.rarity]
+        infoLabel.Font = Enum.Font.Gotham
+        infoLabel.TextSize = 9
+        infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+        infoLabel.Parent = nameContainer
+        
+        if charData.mutation then
+            local mutationIcon = Instance.new("Frame")
+            mutationIcon.Size = UDim2.new(0, 18, 0, 18)
+            mutationIcon.Position = UDim2.new(1, -22, 0.5, -9)
+            mutationIcon.BackgroundColor3 = MUTATION_COLORS[charData.mutation]
+            mutationIcon.BorderSizePixel = 0
+            mutationIcon.Parent = itemFrame
+            
+            local mutationCorner = Instance.new("UICorner")
+            mutationCorner.CornerRadius = UDim.new(1, 0)
+            mutationCorner.Parent = mutationIcon
+            
+            local mutationLabel = Instance.new("TextLabel")
+            mutationLabel.Size = UDim2.new(1, 0, 1, 0)
+            mutationLabel.BackgroundTransparency = 1
+            mutationLabel.Text = charData.mutation:sub(1,1)
+            mutationLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+            mutationLabel.Font = Enum.Font.GothamBold
+            mutationLabel.TextSize = 10
+            mutationLabel.Parent = mutationIcon
+        end
+        
+        self.elements.characterItems[charName] = {
+            frame = itemFrame,
+            checkbox = checkbox,
+            nameLabel = nameLabel,
+            infoLabel = infoLabel
+        }
+        
+        local isEnabled = gameData.characters[charName].enabled
+        checkbox.BackgroundColor3 = isEnabled and Color3.fromRGB(50, 205, 50) or Color3.fromRGB(120, 120, 120)
+        checkbox.Text = isEnabled and "✓" or ""
+
+        checkbox.MouseButton1Click:Connect(function()
+            local enabled = gameData.characters[charName].enabled
+            gameData.characters[charName].enabled = not enabled
+            
+            checkbox.BackgroundColor3 = gameData.characters[charName].enabled and Color3.fromRGB(50, 205, 50) or Color3.fromRGB(120, 120, 120)
+            checkbox.Text = gameData.characters[charName].enabled and "✓" or ""
+            
+            self:updateTrackingCount()
+            self:updateMainPanel()
+            DataManager:save(gameData)
+        end)
+    end
+    
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #characterNames * 34)
+end
+
+function UIManager:updateCharacterList()
+            if not self.elements.characterItems then return end
+            
+            local visibleCount = 0
+            local searchText = gameData.filters.searchText
+            local exactMatch = gameData.filters.exactMatch
+            local rarityFilter = gameData.filters.selectedRarity
+            local mutationFilter = gameData.filters.selectedMutation
+            local enabledOnly = gameData.filters.enabledOnly
+            
+            for _, charName in ipairs(characterNames) do
+                local item = self.elements.characterItems[charName]
+                if not item then continue end
+                
+                local charData = COMPLETE_DATABASE[charName]
+                local trackData = gameData.characters[charName]
+                local shouldShow = true
+                
+                if searchText ~= "" then
+                    local nameToSearch = charName:lower()
+                    local baseCharToSearch = charData.baseChar:lower()
+                    
+                    if exactMatch then
+                        shouldShow = (nameToSearch == searchText) or (baseCharToSearch == searchText) or (nameToSearch:find(searchText, 1, true))
+                    else
+                        shouldShow = nameToSearch:find(searchText, 1, true) ~= nil or baseCharToSearch:find(searchText, 1, true) ~= nil
+                    end
+                end
+                
+                if shouldShow and rarityFilter and rarityFilter ~= "All" then
+                    shouldShow = charData.rarity == rarityFilter
+                end
+                
+                if shouldShow and mutationFilter and mutationFilter ~= "All" then
+                    if mutationFilter == "Base" then
+                        shouldShow = charData.mutation == nil
+                    else
+                        shouldShow = charData.mutation == mutationFilter
+                    end
+                end
+                
+                if shouldShow and enabledOnly then
+                    shouldShow = trackData.enabled
+                end
+                
+                if shouldShow then
+                    item.frame.Visible = true
+                    item.frame.Position = UDim2.new(0, 5, 0, visibleCount * 34)
+                    visibleCount = visibleCount + 1
+                else
+                    item.frame.Visible = false
+                end
+            end
+            
+            GameState.trackingDisplayed = visibleCount
+            self.elements.characterCountLabel.Text = "Characters (" .. GameState.trackingDisplayed .. ")"
+            self.elements.characterScroll.CanvasSize = UDim2.new(0, 0, 0, visibleCount * 34)
+            self:updateFooter()
+        end
+
+        function UIManager:createMainPanel()
+            local mainPanel = Instance.new("Frame")
+            mainPanel.Name = "MainPanel"
+            mainPanel.Size = UDim2.new(1, -350, 1, -115)  -- Adjusted bottom margin from -110 to -115
+            mainPanel.Position = UDim2.new(0, 340, 0, 70)
+            mainPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+            mainPanel.BorderSizePixel = 0
+            mainPanel.Parent = self.elements.mainFrame
+            
+            local panelCorner = Instance.new("UICorner")
+            panelCorner.CornerRadius = UDim.new(0, 12)
+            panelCorner.Parent = mainPanel
+                local panelStroke = Instance.new("UIStroke")
+            panelStroke.Color = Color3.fromRGB(60, 60, 80)
+            panelStroke.Thickness = 1
+            panelStroke.Transparency = 0.6
+            panelStroke.Parent = mainPanel
+            
+            self:createTrackingHeader(mainPanel)
+            self:createTrackingArea(mainPanel)
+            
+            self.elements.mainPanel = mainPanel
+        end
+
+        function UIManager:createTrackingHeader(parent)
+            local header = Instance.new("Frame")
+            header.Size = UDim2.new(1, -20, 0, 35)
+            header.Position = UDim2.new(0, 10, 0, 10)
+            header.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+            header.BorderSizePixel = 0
+            header.Parent = parent
+            
+            local headerCorner = Instance.new("UICorner")
+            headerCorner.CornerRadius = UDim.new(0, 8)
+            headerCorner.Parent = header
+            
+            local columns = {
+                {text = "Character", width = 0.3, align = "Left"},
+                {text = "Status", width = 0.12, align = "Center"},
+                {text = "Current", width = 0.1, align = "Center"},
+                {text = "Total", width = 0.1, align = "Center"},
+                {text = "Session", width = 0.1, align = "Center"},
+                {text = "Last Seen", width = 0.15, align = "Center"},
+                {text = "Priority", width = 0.13, align = "Center"}
+            }
+            
+            local xOffset = 0
+            for _, col in ipairs(columns) do
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(col.width, -5, 1, 0)
+                label.Position = UDim2.new(xOffset, 5, 0, 0)
+                label.BackgroundTransparency = 1
+                label.Text = col.text
+                label.TextColor3 = Color3.fromRGB(200, 200, 255)
+                label.Font = Enum.Font.GothamBold
+                label.TextSize = 11
+                label.TextXAlignment = col.align == "Left" and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
+                label.Parent = header
+                
+                xOffset = xOffset + col.width
+            end
+        end
+
+        function UIManager:createTrackingArea(parent)
+            local scrollFrame = Instance.new("ScrollingFrame")
+            scrollFrame.Name = "TrackingScroll"
+            scrollFrame.Size = UDim2.new(1, -20, 1, -55)
+            scrollFrame.Position = UDim2.new(0, 10, 0, 45)
+            scrollFrame.BackgroundTransparency = 1
+            scrollFrame.BorderSizePixel = 0
+            scrollFrame.ScrollBarThickness = 8
+            scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
+            scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+            scrollFrame.Parent = parent
+            
+            self.elements.trackingScroll = scrollFrame
+            self.elements.trackingRows = {}
+            
+            self:populateTrackingRows()
+        end
+
+        function UIManager:populateTrackingRows()
+            local scrollFrame = self.elements.trackingScroll
+            local rowHeight = 30
+            local visibleRows = 0
+            
+            for _, charName in ipairs(characterNames) do
+                local charData = COMPLETE_DATABASE[charName]
+                local trackData = gameData.characters[charName]
+                
+                if trackData.enabled then
+                    local row = Instance.new("Frame")
+                    row.Name = charName:gsub("%s+", "_") .. "_Row"
+                    row.Size = UDim2.new(1, -5, 0, rowHeight - 2)
+                    row.Position = UDim2.new(0, 0, 0, visibleRows * rowHeight)
+                    row.BackgroundColor3 = visibleRows % 2 == 0 and Color3.fromRGB(30, 30, 42) or Color3.fromRGB(25, 25, 35)
+                    row.BorderSizePixel = 0
+                    row.Parent = scrollFrame
+                    
+                    local rowCorner = Instance.new("UICorner")
+                    rowCorner.CornerRadius = UDim.new(0, 6)
+                    rowCorner.Parent = row
+                    
+                    local rarityStripe = Instance.new("Frame")
+                    rarityStripe.Size = UDim2.new(0, 3, 1, -4)
+                    rarityStripe.Position = UDim2.new(0, 2, 0, 2)
+                    rarityStripe.BackgroundColor3 = RARITY_COLORS[charData.rarity]
+                    rarityStripe.BorderSizePixel = 0
+                    rarityStripe.Parent = row
+                    
+                    local stripeCorner = Instance.new("UICorner")
+                    stripeCorner.CornerRadius = UDim.new(0, 1)
+                    stripeCorner.Parent = rarityStripe
+                    
+                    local nameContainer = Instance.new("Frame")
+                    nameContainer.Size = UDim2.new(0.3, -10, 1, 0)
+                    nameContainer.Position = UDim2.new(0, 8, 0, 0)
+                    nameContainer.BackgroundTransparency = 1
+                    nameContainer.Parent = row
+                    
+                    local displayName = charName
+                    if charData.mutation then
+                        displayName = charData.mutation:sub(1,1) .. ". " .. charName:gsub("^" .. charData.mutation .. " ", "")
+                    end
+                    
+                    local nameLabel = Instance.new("TextLabel")
+                    nameLabel.Size = UDim2.new(1, -20, 1, 0)
+                    nameLabel.BackgroundTransparency = 1
+                    nameLabel.Text = displayName
+                    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    nameLabel.Font = Enum.Font.Gotham
+                    nameLabel.TextSize = 10
+                    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                    nameLabel.Parent = nameContainer
+                    
+                    if charData.mutation then
+                        local mutIcon = Instance.new("Frame")
+                        mutIcon.Size = UDim2.new(0, 12, 0, 12)
+                        mutIcon.Position = UDim2.new(1, -15, 0.5, -6)
+                        mutIcon.BackgroundColor3 = MUTATION_COLORS[charData.mutation]
+                        mutIcon.BorderSizePixel = 0
+                        mutIcon.Parent = nameContainer
+                        
+                        local mutCorner = Instance.new("UICorner")
+                        mutCorner.CornerRadius = UDim.new(1, 0)
+                        mutCorner.Parent = mutIcon
+                    end
+                    
+                    local statusContainer = Instance.new("Frame")
+                    statusContainer.Size = UDim2.new(0.12, 0, 1, 0)
+                    statusContainer.Position = UDim2.new(0.3, 0, 0, 0)
+                    statusContainer.BackgroundTransparency = 1
+                    statusContainer.Parent = row
+                    
+                    local statusDot = Instance.new("Frame")
+                    statusDot.Size = UDim2.new(0, 10, 0, 10)
+                    statusDot.Position = UDim2.new(0.5, -5, 0.5, -5)
+                    statusDot.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+                    statusDot.BorderSizePixel = 0
+                    statusDot.Parent = statusContainer
+                    
+                    local dotCorner = Instance.new("UICorner")
+                    dotCorner.CornerRadius = UDim.new(1, 0)
+                    dotCorner.Parent = statusDot
+                    
+                    local columns = {
+                        {name = "current", pos = 0.42, width = 0.1},
+                        {name = "total", pos = 0.52, width = 0.1},
+                        {name = "session", pos = 0.62, width = 0.1},
+                        {name = "lastSeen", pos = 0.72, width = 0.15},
+                        {name = "priority", pos = 0.87, width = 0.13}
+                    }
+                    
+                    local labels = {}
+                    for _, col in ipairs(columns) do
+                        local label = Instance.new("TextLabel")
+                        label.Size = UDim2.new(col.width, -5, 1, 0)
+                        label.Position = UDim2.new(col.pos, 0, 0, 0)
+                        label.BackgroundTransparency = 1
+                        label.Text = col.name == "priority" and string.format("%.1f", (10-charData.tier) * charData.multiplier) or "0"
+                        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        label.Font = Enum.Font.Gotham
+                        label.TextSize = 10
+                        label.Parent = row
+                        
+                        labels[col.name] = label
+                    end
+                    
+                    self.elements.trackingRows[charName] = {
+                        row = row,
+                        statusDot = statusDot,
+                        nameLabel = nameLabel,
+                        labels = labels
+                    }
+                    
+                    visibleRows = visibleRows + 1
+                end
+            end
+            
+            scrollFrame.CanvasSize = UDim2.new(0, 0, 0, visibleRows * rowHeight)
+        end
+
+        function UIManager:updateMainPanel()
+            if not self.elements.trackingScroll then return end
+            
+            for _, child in pairs(self.elements.trackingScroll:GetChildren()) do
+                if child:IsA("Frame") then
+                    child:Destroy()
+                end
+            end
+            
+            self.elements.trackingRows = {}
+            self:populateTrackingRows()
+        end
+
+        function UIManager:createFooter()
+            local footer = Instance.new("Frame")
+            footer.Name = "Footer"
+            footer.Size = UDim2.new(1, 0, 0, 35)  -- Reduced from 40 to 35
+            footer.Position = UDim2.new(0, 0, 1, -35)  -- Updated position
+            footer.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+            footer.BorderSizePixel = 0
+            footer.Parent = self.elements.mainFrame
+            
+            local footerCorner = Instance.new("UICorner")
+            footerCorner.CornerRadius = UDim.new(0, 16)
+            footerCorner.Parent = footer
+            
+            local cornerFix = Instance.new("Frame")
+            cornerFix.Size = UDim2.new(1, 0, 0, 16)
+            cornerFix.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+            cornerFix.BorderSizePixel = 0
+            cornerFix.Parent = footer
+            
+            local statusContainer = Instance.new("Frame")
+            statusContainer.Size = UDim2.new(1, -40, 1, -8)  -- Reduced padding
+            statusContainer.Position = UDim2.new(0, 20, 0, 4)  -- Adjusted position
+            statusContainer.BackgroundTransparency = 1
+            statusContainer.Parent = footer
+            
+            local statusItems = {
+                {name = "lastUpdate", text = "Updated: Now", pos = 0},
+                {name = "sessionInfo", text = "Session: 0m", pos = 0.2},
+                {name = "performance", text = "FPS: 60", pos = 0.5},
+                {name = "tracking", text = "Tracking: 0/0", pos = 0.75}
+            }
+            
+            for _, item in ipairs(statusItems) do
+                local label = Instance.new("TextLabel")
+                label.Name = item.name
+                label.Size = UDim2.new(0.25, -10, 1, 0)
+                label.Position = UDim2.new(item.pos, 0, 0, 0)
+                label.BackgroundTransparency = 1
+                label.Text = item.text
+                label.TextColor3 = Color3.fromRGB(150, 150, 170)
+                label.Font = Enum.Font.Gotham
+                label.TextSize = 10
+                label.TextXAlignment = Enum.TextXAlignment.Left
+                label.Parent = statusContainer
+                
+                self.elements[item.name] = label
+            end
+        end
+
+        function UIManager:makeDraggable()
+            local frame = self.elements.mainFrame
+            local handle = self.elements.header
+            
+            local dragging = false
+            local dragInput, dragStart, startPos
+            
+            local function update(input)
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+            
+            handle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = frame.Position
+
+                    input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then
+                            dragging = false
+                        end
+                    end)
+                end
+            end)
+
+            handle.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    dragInput = input
+                end
+            end)
+            
+            Services.UserInputService.InputChanged:Connect(function(input)
+                if input == dragInput and dragging then
+                    update(input)
+                end
+            end)
+        end
+
+        function UIManager:updateTrackingCount()
+            local enabledCount = 0
+            local totalCount = 0
+                for _, charName in ipairs(characterNames) do
+                local trackData = gameData.characters[charName]
+                if trackData.enabled then
+                    enabledCount = enabledCount + 1
+                end
+                totalCount = totalCount + 1
+            end
+            
+            GameState.trackingEnabled = enabledCount
+            GameState.trackingTotal = totalCount
+            self:updateFooter()
+        end
+
+        function UIManager:updateFooter()
+            if self.elements.lastUpdate then
+                self.elements.lastUpdate.Text = "Updated: " .. os.date("%X", GameState.lastUpdateTime)
+            end
+            
+            if self.elements.sessionInfo then
+                local now = os.time()
+                local sessionTime = now - GameState.joinTime
+                
+                local hours = math.floor(sessionTime / 3600)
+                local minutes = math.floor((sessionTime % 3600) / 60)
+                local seconds = sessionTime % 60
+                
+                if hours > 0 then
+                    self.elements.sessionInfo.Text = string.format("Session: %dh %dm %ds", hours, minutes, seconds)
+                elseif minutes > 0 then
+                    self.elements.sessionInfo.Text = string.format("Session: %dm %ds", minutes, seconds)
+                else
+                    self.elements.sessionInfo.Text = string.format("Session: %ds", seconds)
+                end
+            end
+            
+            if self.elements.performance then
+                self.elements.performance.Text = string.format("FPS: %d", math.floor(GameState.averageFPS))
+            end
+            
+            if self.elements.tracking then
+                self.elements.tracking.Text = string.format("Tracking: %d/%d", GameState.trackingEnabled, GameState.trackingDisplayed)
+            end
+        end
+
+        local CharacterTracker = {
+            instances = {},
+            previousCounts = {},
+            scanCache = {},
+            lastScan = 0
+        }
+
+        function CharacterTracker:scanWorkspace()
+            local now = tick()
+            if now - self.lastScan < 0.1 then
+                return self.scanCache
+            end
+            
+            self.lastScan = now
+            self.scanCache = {}
+            
+            local workspaceChildren = workspace:GetChildren()
+            for _, obj in pairs(workspaceChildren) do
+                if obj:IsA("Model") and COMPLETE_DATABASE[obj.Name] then
+                    if not self.scanCache[obj.Name] then
+                        self.scanCache[obj.Name] = {}
+                    end
+                    table.insert(self.scanCache[obj.Name], obj)
+                end
+            end
+            
+            return self.scanCache
+        end
+
+        function CharacterTracker:getCharacterCount(charName)
+            local cache = self:scanWorkspace()
+            local list = cache[charName]
+            return list and #list or 0
+        end
+
+        function CharacterTracker:updateCharacterStates(deltaTime)
+            deltaTime = deltaTime or CONFIG.UPDATE_INTERVAL
+
+            for _, charName in ipairs(characterNames) do
+                -- Ensure character entry exists
+                local trackData = gameData.characters[charName]
+                if not trackData then
+                    gameData.characters[charName] = {
+                        enabled = false,
+                        totalSeen = 0,
+                        currentCount = 0,
+                        status = "never",
+                        lastSeen = 0,
+                        sessionSpawns = 0,
+                        totalTime = 0
+                    }
+                    trackData = gameData.characters[charName]
+                end
+
+                if trackData.enabled then
+                    local currentCount = self:getCharacterCount(charName)
+                    if currentCount > 0 then
+                        if trackData.status ~= "active" then
+                            trackData.status = "active"
+                            trackData.sessionSpawns = trackData.sessionSpawns + 1
+                            trackData.totalSeen = trackData.totalSeen + 1
+                            trackData.lastSeen = os.time()
+                            
+                            -- Send webhook notification for character spawn
+                            local charData = COMPLETE_DATABASE[charName]
+                            if charData and charData.rarity then
+                                local rarity = charData.rarity
+                                if rarity == "Secret" or rarity == "Awakened" or rarity == "Mythic" or rarity == "Legendary" then
+                                    WebhookManager:notifyCharacterSpawn(charName, rarity, game.JobId)
+                                end
+                            end
+                        end
+                        trackData.currentCount = currentCount
+                        trackData.totalTime = trackData.totalTime + deltaTime
+                    else
+                        if trackData.status ~= "inactive" then
+                            trackData.status = "inactive"
+                        end
+                        trackData.currentCount = 0
+                    end
+                else
+                    trackData.status = "disabled"
+                    trackData.currentCount = 0
+                end
+
+                -- Live-update the UI row if present
+                self:updateCharacterUI(charName)
+            end
+
+            DataManager:save(gameData)
+        end
+
+        function CharacterTracker:updateCharacterUI(charName)
+            local trackData = gameData.characters[charName]
+            local charData = COMPLETE_DATABASE[charName]
+            local row = UIManager.elements.trackingRows[charName]
+            if not row or not trackData or not charData then return end
+
+            local statusColor
+            if trackData.status == "active" then
+                statusColor = Color3.fromRGB(76, 175, 80)      -- green
+            elseif trackData.status == "inactive" then
+                statusColor = Color3.fromRGB(244, 67, 54)      -- red
+            else
+                statusColor = Color3.fromRGB(158, 158, 158)    -- gray (disabled/never)
+            end
+            row.statusDot.BackgroundColor3 = statusColor
+
+            row.labels.current.Text = tostring(trackData.currentCount)
+            row.labels.total.Text = tostring(trackData.totalSeen)
+            row.labels.session.Text = tostring(trackData.sessionSpawns)
+
+            if trackData.lastSeen > 0 then
+                local elapsed = os.time() - trackData.lastSeen
+                if elapsed < 60 then
+                    row.labels.lastSeen.Text = string.format("%ds", elapsed)
+                elseif elapsed < 3600 then
+                    row.labels.lastSeen.Text = string.format("%dm", math.floor(elapsed / 60))
+                else
+                    row.labels.lastSeen.Text = string.format("%dh", math.floor(elapsed / 3600))
+                end
+            else
+                row.labels.lastSeen.Text = "Never"
+            end
+
+            row.labels.priority.Text = string.format("%d", charData.income or 0)
+        end
+
+        local function initialize()
+        print("[VolleyballVision] Initializing...")
+
+        -- Load saved data or fallback to defaults
+        gameData = DataManager:load() or DataManager:getDefaultData()
+
+        -- Safety: ensure characters table exists
+        gameData.characters = gameData.characters or {}
+        
+        -- Safety: ensure settings exist with defaults
+        gameData.settings = gameData.settings or {}
+        gameData.settings.autoLockEnabled = gameData.settings.autoLockEnabled or false
+        gameData.settings.autoCollectEnabled = gameData.settings.autoCollectEnabled or false
+        gameData.settings.autoBuyEnabled = gameData.settings.autoBuyEnabled or false
+        gameData.settings.soundEnabled = gameData.settings.soundEnabled or true
+        gameData.settings.performanceMode = gameData.settings.performanceMode or false
+
+        -- Update tracking total based on available character names
+        GameState.trackingTotal = #characterNames
+
+        -- Create UI
+        UIManager:create()
+        UIManager:updateTrackingCount()
+        UIManager:updateCharacterList()
+
+        -- Initialize auto systems with saved states
+        print("[VolleyballVision] Initializing auto systems...")
+        
+        if gameData.settings.autoLockEnabled then
+            print("[VolleyballVision] Restoring Auto Lock system...")
+            AutoLock:toggle()
+        end
+
+        if gameData.settings.autoCollectEnabled then
+            print("[VolleyballVision] Restoring Auto Collect system...")
+            AutoCollect:toggle()
+        end
+        
+        if gameData.settings.autoBuyEnabled then
+            print("[VolleyballVision] Restoring Auto Buy system...")
+            AutoBuySystem:toggle()
+        end
+
+        -- Send script execution notification
+        WebhookManager:notifyScriptExecution()
+
+        -- Delay starting the tracker so UI builds first
+        task.delay(0.5, function()
+            GameState.scriptActive = true
+            CharacterTracker:updateCharacterStates()
+            print("[VolleyballVision] Initialization complete.")
+            print("[VolleyballVision] Tracking " .. tostring(GameState.trackingEnabled) .. " characters.")
+            print("[VolleyballVision] Auto Lock: " .. (gameData.settings.autoLockEnabled and "ON" or "OFF"))
+            print("[VolleyballVision] Auto Collect: " .. (gameData.settings.autoCollectEnabled and "ON" or "OFF"))
+            print("[VolleyballVision] Auto Buy: " .. (gameData.settings.autoBuyEnabled and "ON" or "OFF"))
+        end)
+    end
+
+        -- Main update loop to keep tracker and UI refreshed
+        local function mainUpdate(deltaTime)
+            local now = tick()
+
+            if GameState.scriptActive and (now - GameState.lastUpdate) >= CONFIG.UPDATE_INTERVAL then
+                GameState.lastUpdate = now
+                GameState.lastUpdateTime = os.time()
+
+                -- Update character states and footer
+                CharacterTracker:updateCharacterStates(deltaTime)
+                UIManager:updateFooter()
+            end
+
+            -- Update performance metrics
+            PerformanceMonitor:update(deltaTime)
+        end
+
+        -- Connect to RunService.Heartbeat for continuous updates
+        Services.RunService.Heartbeat:Connect(function(deltaTime)
+            mainUpdate(deltaTime)
+        end)
+
+        task.wait(2)
+        initialize()
+print("hel")
