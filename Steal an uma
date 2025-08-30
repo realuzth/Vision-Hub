@@ -784,7 +784,6 @@ local function isCharacterPurchasedByUs(character)
             AutoBuySystem.characterInstances[character.Name][uid] = nil
         end
     end
-    
     return false
 end
 
@@ -792,14 +791,14 @@ end
 local function detectCharacterRespawn(characterName)
     if not AutoBuySystem.characterInstances[characterName] then return false end
     
-    -- Get current instances in workspace
+    -- Check if character exists directly in workspace
+    local currentCharacter = workspace[characterName]
     local currentInstances = {}
-    for _, obj in pairs(workspace:GetChildren()) do
-        if obj:IsA("Model") and obj.Name == characterName then
-            local uid = getCharacterUID(obj)
-            if uid then
-                currentInstances[uid] = obj
-            end
+    
+    if currentCharacter and currentCharacter:IsA("Model") then
+        local uid = getCharacterUID(currentCharacter)
+        if uid then
+            currentInstances[uid] = currentCharacter
         end
     end
     
@@ -1024,8 +1023,9 @@ function AutoBuySystem:setupPromptMonitoring()
     print("🔍 Setting up proximity prompt monitoring...")
     
     -- Monitor all existing characters
-    for _, obj in pairs(workspace:GetChildren()) do
-        if obj:IsA("Model") and COMPLETE_DATABASE[obj.Name] then
+    for charName, _ in pairs(COMPLETE_DATABASE) do
+        local obj = workspace[charName]
+        if obj and obj:IsA("Model") then
             self:monitorCharacterPrompt(obj)
         end
     end
@@ -1126,7 +1126,7 @@ function AutoBuySystem:findBestTarget()
         -- Run respawn detection for this character type
         detectCharacterRespawn(charName)
         
-        local target = workspace:FindFirstChild(charName)
+        local target = workspace[charName]
         if target and target:IsA("Model") and target:FindFirstChild("HumanoidRootPart") then
             if isCharacterPurchased(target) then continue end
             
@@ -3285,13 +3285,14 @@ function UIManager:updateCharacterList()
             self.lastScan = now
             self.scanCache = {}
             
-            local workspaceChildren = workspace:GetChildren()
-            for _, obj in pairs(workspaceChildren) do
-                if obj:IsA("Model") and COMPLETE_DATABASE[obj.Name] then
-                    if not self.scanCache[obj.Name] then
-                        self.scanCache[obj.Name] = {}
+            -- Check each character directly in workspace
+            for charName, _ in pairs(COMPLETE_DATABASE) do
+                local obj = workspace[charName]
+                if obj and obj:IsA("Model") then
+                    if not self.scanCache[charName] then
+                        self.scanCache[charName] = {}
                     end
-                    table.insert(self.scanCache[obj.Name], obj)
+                    table.insert(self.scanCache[charName], obj)
                 end
             end
             
