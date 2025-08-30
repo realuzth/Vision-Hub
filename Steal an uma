@@ -3,16 +3,35 @@
 -- Created by uzth
 
 -- KEY VALIDATION SYSTEM
-local VALID_KEY = "ReLEaSe!!"
 local function validateAccess()
     -- This script should only be loaded through the official loader
     -- Direct execution without key validation is not permitted
-    if not _G.UnluckysVisionKeyValidated or _G.UnluckysVisionKey ~= VALID_KEY then
+    if not _G.UnluckysVisionKeyValidated or not _G.UnluckysVisionKeyHash then
         print("❌ Access Denied - This script requires valid key authentication")
         print("Please use the official Unluckys Vision Loader")
         return false
     end
-    return true
+    
+    -- Additional validation: verify key hash is still valid by checking remote source
+    local KEY_REPO_URL = "https://raw.githubusercontent.com/realuzth/Vision-Keys/main/keys.json"
+    local success, result = pcall(function()
+        return game:HttpGet(KEY_REPO_URL)
+    end)
+    
+    if success then
+        local keyData = game:GetService("HttpService"):JSONDecode(result)
+        local validKeyHashes = keyData.keyHashes or {}
+        
+        for _, validHash in ipairs(validKeyHashes) do
+            if _G.UnluckysVisionKeyHash == validHash then
+                return true
+            end
+        end
+    end
+    
+    print("❌ Access Denied - Key validation failed")
+    print("Please use the official Unluckys Vision Loader with a valid key")
+    return false
 end
 
 -- Validate access before proceeding
