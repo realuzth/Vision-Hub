@@ -2,6 +2,24 @@
 -- Enhanced character tracking system for Haikyuu-style games
 -- Created by uzth
 
+-- KEY VALIDATION SYSTEM
+local VALID_KEY = "ReLEaSe!!"
+local function validateAccess()
+    -- This script should only be loaded through the official loader
+    -- Direct execution without key validation is not permitted
+    if not _G.UnluckysVisionKeyValidated or _G.UnluckysVisionKey ~= VALID_KEY then
+        print("❌ Access Denied - This script requires valid key authentication")
+        print("Please use the official Unluckys Vision Loader")
+        return false
+    end
+    return true
+end
+
+-- Validate access before proceeding
+if not validateAccess() then
+    return
+end
+
 local SCRIPT_NAME = "Unluckys Vision"
 local SCRIPT_VERSION = "made by uzth"
 
