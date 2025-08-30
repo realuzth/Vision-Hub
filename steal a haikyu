@@ -325,7 +325,8 @@ local RARITY_COLORS = {
 
 local MUTATION_COLORS = {
     Golden = Color3.fromRGB(255, 215, 0),
-    Diamond = Color3.fromRGB(185, 242, 255)
+    Diamond = Color3.fromRGB(185, 242, 255),
+    Emerald = Color3.fromRGB(80, 200, 120)
 }
 
 local GameState = {
@@ -400,25 +401,25 @@ local function generateMutationVariants()
         }
     end
     
-    -- Golden variants (1.2x multiplier)
+    -- Golden variants (1.25x multiplier)
     for name, data in pairs(CHARACTER_DATABASE) do
         local goldenName = "Golden " .. name
-        local goldenIncome = math.floor(data.income * 1.2)
+        local goldenIncome = math.floor(data.income * 1.25 + 0.5)
         variants[goldenName] = {
             rarity = data.rarity, 
             tier = data.tier, 
             baseChar = data.baseChar, 
             mutation = "Golden", 
             income = goldenIncome,
-            multiplier = 1.2, 
+            multiplier = 1.25, 
             fullName = goldenName
         }
     end
     
-    -- Diamond variants (1.7x multiplier)
+    -- Diamond variants (1.75x multiplier)
     for name, data in pairs(CHARACTER_DATABASE) do
         local diamondName = "Diamond " .. name
-        local diamondIncome = math.floor(data.income * 1.75)
+        local diamondIncome = math.floor(data.income * 1.75 + 0.5)
         variants[diamondName] = {
             rarity = data.rarity, 
             tier = data.tier, 
@@ -427,6 +428,21 @@ local function generateMutationVariants()
             income = diamondIncome,
             multiplier = 1.75, 
             fullName = diamondName
+        }
+    end
+    
+    -- Emerald variants (2.4x multiplier)
+    for name, data in pairs(CHARACTER_DATABASE) do
+        local emeraldName = "Emerald " .. name
+        local emeraldIncome = math.floor(data.income * 2.4 + 0.5)
+        variants[emeraldName] = {
+            rarity = data.rarity, 
+            tier = data.tier, 
+            baseChar = data.baseChar, 
+            mutation = "Emerald", 
+            income = emeraldIncome,
+            multiplier = 2.4, 
+            fullName = emeraldName
         }
     end
     
@@ -459,7 +475,16 @@ local function getSortedCharacters()
         "Diamond Kenma Kozume", "Diamond Yaku Morisuke", "Diamond Yamaguchi", "Diamond Satori Tendo",
         "Diamond Daichi Sawamura", "Diamond Rintaro Suna", "Diamond Atsumu Miya", "Diamond Kei Tsukishima",
         "Diamond Shoyo Hinata", "Diamond Hajime Iwaizumi", "Diamond Kentaro Kyotani", "Diamond Yuu Nishinoya",
-        "Diamond Taketora Yamamoto", "Diamond Lev Haiba", "Diamond Komori Motoya"
+        "Diamond Taketora Yamamoto", "Diamond Lev Haiba", "Diamond Komori Motoya", "Emerald Timeskip Hinata", 
+        "Emerald Awakened Tobio Kageyama", "Emerald Awakened Kiyoomi Sakusa", "Emerald Awakened Korai Hoshiumi", 
+        "Emerald Awakened Wakatoshi Ushijima", "Emerald Shinsuke Kita", "Emerald Tobio Kageyama", 
+        "Emerald Korai Hoshiumi", "Emerald Wakatoshi Ushijima", "Emerald Kiyoomi Sakusa", "Emerald Keiji Akaashi", 
+        "Emerald Takanobu Aone", "Emerald Tetsuro Kuroo", "Emerald Alt Art MSBY Atsumu", "Emerald Kotaro Bokuto", 
+        "Emerald Oikawa", "Emerald Koshi Sugawara", "Emerald Kenma Kozume", "Emerald Yaku Morisuke", 
+        "Emerald Yamaguchi", "Emerald Satori Tendo", "Emerald Daichi Sawamura", "Emerald Rintaro Suna", 
+        "Emerald Atsumu Miya", "Emerald Kei Tsukishima", "Emerald Shoyo Hinata", "Emerald Hajime Iwaizumi", 
+        "Emerald Kentaro Kyotani", "Emerald Yuu Nishinoya", "Emerald Taketora Yamamoto", "Emerald Lev Haiba", 
+        "Emerald Komori Motoya"
     }
     
     for name, data in pairs(COMPLETE_DATABASE) do
@@ -468,7 +493,7 @@ local function getSortedCharacters()
             data.tier = tierMap[data.rarity] or 8
         end
         if not data.baseChar then
-            local cleanName = name:gsub("Golden ", ""):gsub("Diamond ", "")
+            local cleanName = name:gsub("Golden ", ""):gsub("Diamond ", ""):gsub("Emerald ", "")
             data.baseChar = cleanName
         end
     end
@@ -1117,7 +1142,7 @@ function AutoBuySystem:followTarget(target)
     if isCharacterPurchased(target) then return false end
 
     if humanoid and humanoid.WalkSpeed ~= 21 then
-        humanoid.WalkSpeed = 21
+        humanoid.WalkSpeed = 35
     end
 
     local startTime = tick()
@@ -2622,7 +2647,7 @@ function UIManager:createSearchSection(parent)
     end, gameData.filters.selectedRarity or "All")
     rarityFilter.Parent = searchContainer
     
-    local mutationFilter = self:createFilterDropdown("Mutation", {"All", "Base", "Golden", "Diamond"}, 
+    local mutationFilter = self:createFilterDropdown("Mutation", {"All", "Base", "Golden", "Diamond", "Emerald"}, 
         UDim2.new(0.48, 0, 0, 25), UDim2.new(0.52, 0, 0, 80), function(selected)
         gameData.filters.selectedMutation = selected == "All" and nil or selected
         self:updateCharacterList()
@@ -3504,4 +3529,3 @@ function UIManager:updateCharacterList()
 
         task.wait(2)
         initialize()
-print("hel")
